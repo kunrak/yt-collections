@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Channel Collections</title>
+<link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Collections</span>
+    </div>
+
+    <nav class="collection-list" id="collectionList"></nav>
+
+    <button type="button" class="new-collection-btn" id="newCollectionBtn">+ New collection</button>
+
+    <p class="api-key-banner" id="apiKeyBanner" hidden>Add a YouTube Data API key in Settings to load videos.</p>
+
+    <button type="button" class="settings-btn" id="settingsBtn">Settings</button>
+  </aside>
+
+  <main class="main">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 id="collectionTitle">—</h1>
+        <span class="channel-count" id="channelCount"></span>
+      </div>
+
+      <div class="topbar-right">
+        <div class="tab-switch" id="tabSwitch" role="tablist">
+          <button class="tab-btn active" data-tab="videos" role="tab">Videos</button>
+          <button class="tab-btn" data-tab="shorts" role="tab">Shorts</button>
+        </div>
+        <button class="icon-btn" id="manageChannelsBtn" title="Manage channels">Channels</button>
+        <button class="icon-btn" id="refreshBtn" title="Refresh now">Refresh</button>
+      </div>
+    </header>
+
+    <section class="feed" id="feed"></section>
+
+    <div class="empty-state" id="emptyState" hidden>
+      <p class="empty-title">No collections yet</p>
+      <p class="empty-sub">Create a collection and add a few channels to build your first feed.</p>
+      <button class="primary-btn" id="emptyCreateBtn">Create your first collection</button>
+    </div>
+
+  </main>
+</div>
+
+<!-- Manage channels panel -->
+<div class="modal-backdrop" id="channelsModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Channels in <span id="channelsModalCollectionName"></span></h2>
+      <button type="button" class="close-btn" data-close="channelsModal">Close</button>
+    </div>
+
+    <form class="add-channel-form" id="addChannelForm">
+      <input type="text" id="addChannelInput" placeholder="Paste a channel URL, @handle, or channel ID" required />
+      <button type="submit" class="primary-btn" id="addChannelSubmit">Add</button>
+    </form>
+    <p class="form-hint" id="addChannelHint"></p>
+
+    <ul class="channel-manage-list" id="channelManageList"></ul>
+  </div>
+</div>
+
+<!-- Settings panel -->
+<div class="modal-backdrop" id="settingsModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Settings</h2>
+      <button type="button" class="close-btn" data-close="settingsModal">Close</button>
+    </div>
+
+    <label class="field-label" for="apiKeyInput">YouTube Data API key</label>
+    <input type="password" id="apiKeyInput" placeholder="AIza..." />
+    <p class="form-hint">
+      Create a free key in the Google Cloud Console (enable "YouTube Data API v3"),
+      then paste it here. It's stored only in this browser.
+    </p>
+    <button class="primary-btn" id="saveApiKeyBtn">Save key</button>
+
+    <div class="danger-zone">
+      <h3>Delete this collection</h3>
+      <button class="danger-btn" id="deleteCollectionBtn">Delete "<span id="deleteCollectionName"></span>"</button>
+    </div>
+  </div>
+</div>
+
+<!-- New collection panel -->
+<div class="modal-backdrop" id="newCollectionModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>New collection</h2>
+      <button type="button" class="close-btn" data-close="newCollectionModal">Close</button>
+    </div>
+    <form id="newCollectionForm">
+      <label class="field-label" for="newCollectionInput">Name</label>
+      <input type="text" id="newCollectionInput" placeholder="e.g. Woodworking" required />
+      <button type="submit" class="primary-btn">Create</button>
+    </form>
+  </div>
+</div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
