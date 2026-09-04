@@ -149,16 +149,18 @@ async function refreshAll() {
     }
   }
 
-  await setStore({ videos: nextVideos });
-  await chrome.storage.local.set({ lastRefreshedAt: Date.now() });
+  await setStore({ videos: nextVideos, lastRefreshedAt: Date.now() });
   return { refreshed: channelList.length, errors };
 }
 
 // ---------- alarm-driven polling ----------
 
-chrome.runtime.onInstalled.addListener(() => {
+function ensureAlarm() {
   chrome.alarms.create(REFRESH_ALARM, { periodInMinutes: REFRESH_MINUTES });
-});
+}
+
+chrome.runtime.onInstalled.addListener(ensureAlarm);
+chrome.runtime.onStartup.addListener(ensureAlarm);
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === REFRESH_ALARM) refreshAll().catch(() => {});
@@ -185,13 +187,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           channels[msg.channel.id] = msg.channel;
           await setStore({ channels });
           const videos = (await getStore()).videos;
+          let warning = null;
           try {
             videos[msg.channel.id] = await fetchChannelVideos(msg.channel);
-          } catch {
+          } catch (err) {
             videos[msg.channel.id] = videos[msg.channel.id] || [];
+            warning = err.message;
           }
           await setStore({ videos });
-          sendResponse({ ok: true });
+          sendResponse({ ok: true, warning });
           break;
         }
         case "REMOVE_CHANNEL": {

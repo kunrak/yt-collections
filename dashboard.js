@@ -2,13 +2,19 @@
 // YouTube API work; only reads/writes chrome.storage.local directly for
 // collection bookkeeping (not video data, which background.js owns).
 
+const ALL_ID = "__all__";
+const HOME_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 let state = {
   collections: {},
   channels: {},
   videos: {},
   apiKey: "",
+  lastRefreshedAt: null,
+  refreshErrors: [],
   activeCollectionId: null,
-  activeTab: "videos",
+  activeTab: "home",
+  query: "",
 };
 
 const el = (id) => document.getElementById(id);
@@ -26,14 +32,23 @@ function sendMessage(msg) {
 }
 
 async function loadState() {
-  const data = await chrome.storage.local.get(["collections", "channels", "videos", "apiKey"]);
+  const data = await chrome.storage.local.get([
+    "collections",
+    "channels",
+    "videos",
+    "apiKey",
+    "lastRefreshedAt",
+  ]);
   state.collections = data.collections || {};
   state.channels = data.channels || {};
   state.videos = data.videos || {};
   state.apiKey = data.apiKey || "";
+  state.lastRefreshedAt = data.lastRefreshedAt || null;
 
   const ids = Object.keys(state.collections);
-  if (!state.activeCollectionId || !state.collections[state.activeCollectionId]) {
+  const valid =
+    state.activeCollectionId === ALL_ID || Boolean(state.collections[state.activeCollectionId]);
+  if (!valid) {
     state.activeCollectionId = ids[0] || null;
   }
 }
@@ -51,6 +66,9 @@ function genId() {
 function renderSidebar() {
   const list = el("collectionList");
   list.innerHTML = "";
+  const allItem = el("allCollectionsItem");
+  allItem.classList.toggle("active", state.activeCollectionId === ALL_ID);
+  el("allChannelCount").textContent = Object.keys(state.channels).length;
   for (const col of Object.values(state.collections)) {
     const item = document.createElement("div");
     item.className = "collection-item" + (col.id === state.activeCollectionId ? " active" : "");
@@ -63,15 +81,48 @@ function renderSidebar() {
   }
 }
 
+function isAllView() {
+  return state.activeCollectionId === ALL_ID;
+}
+
 function activeCollection() {
-  return state.activeCollectionId ? state.collections[state.activeCollectionId] : null;
+  if (!state.activeCollectionId || isAllView()) return null;
+  return state.collections[state.activeCollectionId] || null;
+}
+
+// Channel IDs in scope for the current view (one collection or all of them).
+function activeChannelIds() {
+  if (isAllView()) return Object.keys(state.channels);
+  const col = activeCollection();
+  return col ? col.channelIds : [];
 }
 
 function renderTopbar() {
   const col = activeCollection();
-  el("collectionTitle").textContent = col ? col.name : "No collection selected";
-  el("channelCount").textContent = col
-    ? `${col.channelIds.length} channel${col.channelIds.length === 1 ? "" : "s"}`
+  const n = activeChannelIds().length;
+  const label = `${n} channel${n === 1 ? "" : "s"}`;
+  if (isAllView()) {
+    el("collectionTitle").textContent = "All collections";
+    el("channelCount").textContent = label;
+  } else {
+    el("collectionTitle").textContent = col ? col.name : "No collection selected";
+    el("channelCount").textContent = col ? label : "";
+  }
+}
+
+function renderStatusLine() {
+  const line = el("statusLine");
+  if (state.refreshErrors.length > 0) {
+    const first = state.refreshErrors[0];
+    const name = state.channels[first.channelId]?.title || "a channel";
+    const more = state.refreshErrors.length > 1 ? ` (+${state.refreshErrors.length - 1} more)` : "";
+    line.textContent = `Refresh failed for ${name}: ${friendlyError(first.message)}${more}`;
+    line.classList.add("error");
+    return;
+  }
+  line.classList.remove("error");
+  line.textContent = state.lastRefreshedAt
+    ? `Last refreshed ${timeAgo(new Date(state.lastRefreshedAt).toISOString())}`
     : "";
 }
 
@@ -99,7 +150,7 @@ function renderFeed() {
   feed.innerHTML = "";
 
   const col = activeCollection();
-  if (!col) {
+  if (!col && !isAllView()) {
     empty.hidden = false;
     feed.hidden = true;
     return;
@@ -107,24 +158,40 @@ function renderFeed() {
   empty.hidden = true;
   feed.hidden = false;
 
-  const wantShort = state.activeTab === "shorts";
+  const tab = state.activeTab;
+  const query = state.query.trim().toLowerCase();
+  const cutoff = Date.now() - HOME_WINDOW_MS;
+  const channelIds = activeChannelIds();
   const items = [];
-  for (const channelId of col.channelIds) {
+  for (const channelId of channelIds) {
+    const channelTitle = (state.channels[channelId]?.title || "").toLowerCase();
     const vids = state.videos[channelId] || [];
     for (const v of vids) {
-      if (v.isShort === wantShort) items.push(v);
+      if (tab === "videos" && v.isShort) continue;
+      if (tab === "shorts" && !v.isShort) continue;
+      if (tab === "home" && !query && new Date(v.publishedAt).getTime() < cutoff) continue;
+      if (query && !v.title.toLowerCase().includes(query) && !channelTitle.includes(query)) continue;
+      items.push(v);
     }
   }
   items.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
   if (items.length === 0) {
+    let sub;
+    if (channelIds.length === 0) {
+      sub = isAllView()
+        ? "Add some channels to a collection to start seeing updates."
+        : "Add some channels to this collection to start seeing updates.";
+    } else if (query) {
+      sub = `No videos match “${escapeHtml(state.query.trim())}”.`;
+    } else if (tab === "home") {
+      sub = "No uploads from these channels in the last 7 days. Try Videos or Shorts for older uploads, or hit Refresh.";
+    } else {
+      sub = `No recent ${tab === "shorts" ? "Shorts" : "videos"} from these channels. Hit Refresh to check again.`;
+    }
     feed.innerHTML = `<div class="feed-empty">
-      <p class="empty-title">Nothing here yet</p>
-      <p class="empty-sub">${
-        col.channelIds.length === 0
-          ? "Add some channels to this collection to start seeing updates."
-          : `No recent ${wantShort ? "Shorts" : "videos"} from these channels."`
-      }</p>
+      <p class="empty-title">${query ? "No results" : "Nothing here yet"}</p>
+      <p class="empty-sub">${sub}</p>
     </div>`;
     return;
   }
@@ -132,7 +199,7 @@ function renderFeed() {
   for (const v of items) {
     const channel = state.channels[v.channelId];
     const card = document.createElement("a");
-    card.className = "video-card" + (v.isShort ? " short" : "");
+    card.className = "video-card" + (v.isShort && tab === "shorts" ? " short" : "");
     card.href = v.url;
     card.target = "_blank";
     card.rel = "noopener";
@@ -142,7 +209,7 @@ function renderFeed() {
         <div class="video-title">${escapeHtml(v.title)}</div>
         <div class="video-meta">
           <span>${escapeHtml(channel?.title || "")}</span>
-          <span>${timeAgo(v.publishedAt)}</span>
+          <span>${v.isShort && tab !== "shorts" ? "Short · " : ""}${timeAgo(v.publishedAt)}</span>
         </div>
       </div>
     `;
@@ -158,9 +225,22 @@ function renderApiKeyBanner() {
 function renderAll() {
   renderSidebar();
   renderTopbar();
+  renderStatusLine();
   renderFeed();
   renderApiKeyBanner();
 }
+
+el("allCollectionsItem").addEventListener("click", () => {
+  state.activeCollectionId = ALL_ID;
+  renderAll();
+});
+
+// ---------- search ----------
+
+el("searchInput").addEventListener("input", (e) => {
+  state.query = e.target.value;
+  renderFeed();
+});
 
 // ---------- collection management ----------
 
@@ -207,6 +287,10 @@ el("tabSwitch").addEventListener("click", (e) => {
 el("manageChannelsBtn").addEventListener("click", () => {
   const col = activeCollection();
   if (!col) {
+    if (isAllView() && Object.keys(state.collections).length > 0) {
+      alert("Pick a collection in the sidebar to manage its channels.");
+      return;
+    }
     openModal("newCollectionModal");
     return;
   }
@@ -279,6 +363,7 @@ el("addChannelForm").addEventListener("submit", async (e) => {
   }
 
   const channel = resolveRes.channel;
+  let addWarning = null;
 
   if (!state.channels[channel.id]) {
     hint.textContent = `Adding ${channel.title}...`;
@@ -297,6 +382,9 @@ el("addChannelForm").addEventListener("submit", async (e) => {
       submitBtn.disabled = false;
       return;
     }
+    if (addRes.warning) {
+      addWarning = `Added ${channel.title}, but couldn't load its videos: ${friendlyError(addRes.warning)}`;
+    }
   }
 
   if (!col.channelIds.includes(channel.id)) {
@@ -305,8 +393,8 @@ el("addChannelForm").addEventListener("submit", async (e) => {
   }
 
   await loadState();
-  hint.textContent = `Added ${channel.title}.`;
-  hint.style.color = "";
+  hint.textContent = addWarning || `Added ${channel.title}.`;
+  hint.style.color = addWarning ? "var(--danger)" : "";
   input.value = "";
   submitBtn.disabled = false;
   renderChannelManageList();
@@ -315,6 +403,11 @@ el("addChannelForm").addEventListener("submit", async (e) => {
 
 function friendlyError(msg) {
   if (msg === "NO_API_KEY") return "Add a YouTube Data API key in Settings first.";
+  if (/Could not establish connection|Receiving end does not exist/i.test(msg || "")) {
+    return "Background script isn't running. Reload the extension from chrome://extensions and try again.";
+  }
+  if (/quota/i.test(msg || "")) return "YouTube API quota exceeded for today. It resets at midnight Pacific time.";
+  if (/API key not valid|keyInvalid/i.test(msg || "")) return "Your API key was rejected. Check it in Settings.";
   return msg || "Something went wrong. Try again.";
 }
 
@@ -349,11 +442,13 @@ el("refreshBtn").addEventListener("click", async () => {
   } catch (err) {
     res = { ok: false, error: err.message };
   }
+  state.refreshErrors = res.ok ? res.result.errors || [] : [];
   await loadState();
   renderAll();
   btn.disabled = false;
   btn.textContent = "Refresh";
   if (!res.ok) alert(friendlyError(res.error));
+  else if (res.result.refreshed === 0) alert("No channels to refresh yet. Add channels to a collection first.");
 });
 
 // ---------- modal plumbing ----------

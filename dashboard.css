@@ -102,6 +102,16 @@ button, input {
   color: var(--text-muted);
 }
 
+.collection-item.all-item {
+  font-weight: 600;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px;
+}
+
 .new-collection-btn,
 .settings-btn {
   background: transparent;
@@ -181,6 +191,32 @@ button, input {
 .tab-btn.active {
   background: var(--blue);
   color: #0D1220;
+}
+
+.search-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  width: 220px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--blue-dim);
+}
+
+.status-line {
+  margin: -10px 0 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  min-height: 1em;
+}
+
+.status-line.error {
+  color: var(--danger);
 }
 
 .icon-btn {

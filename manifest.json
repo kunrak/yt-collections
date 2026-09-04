@@ -11,6 +11,7 @@
   "permissions": ["storage", "alarms"],
   "host_permissions": ["https://www.googleapis.com/*"],
   "background": {
+    "service_worker": "background.js",
     "scripts": ["background.js"]
   },
   "action": {
