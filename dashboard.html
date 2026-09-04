@@ -15,7 +15,11 @@
       <span class="brand-name">Collections</span>
     </div>
 
-    <nav class="collection-list" id="collectionList"></nav>
+    <nav class="collection-list">
+      <div class="collection-item all-item" id="allCollectionsItem"><span>All collections</span><span class="count" id="allChannelCount"></span></div>
+      <div class="sidebar-divider"></div>
+      <div id="collectionList"></div>
+    </nav>
 
     <button type="button" class="new-collection-btn" id="newCollectionBtn">+ New collection</button>
 
@@ -33,14 +37,18 @@
       </div>
 
       <div class="topbar-right">
+        <input type="search" class="search-input" id="searchInput" placeholder="Search videos…" autocomplete="off" />
         <div class="tab-switch" id="tabSwitch" role="tablist">
-          <button class="tab-btn active" data-tab="videos" role="tab">Videos</button>
+          <button class="tab-btn active" data-tab="home" role="tab">Home</button>
+          <button class="tab-btn" data-tab="videos" role="tab">Videos</button>
           <button class="tab-btn" data-tab="shorts" role="tab">Shorts</button>
         </div>
         <button class="icon-btn" id="manageChannelsBtn" title="Manage channels">Channels</button>
         <button class="icon-btn" id="refreshBtn" title="Refresh now">Refresh</button>
       </div>
     </header>
+
+    <p class="status-line" id="statusLine"></p>
 
     <section class="feed" id="feed"></section>
 

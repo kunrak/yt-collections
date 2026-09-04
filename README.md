@@ -34,6 +34,13 @@ personal use — fetching updates costs roughly 2 units per channel per refresh.
 ## How it works
 
 - Each collection is just a named set of channels.
+- Every collection opens on a **Home** tab showing everything (videos and
+  Shorts) uploaded in the last 7 days, newest first. The **Videos** and
+  **Shorts** tabs show all cached uploads of each kind.
+- **All collections** in the sidebar shows the same three tabs across every
+  channel you follow.
+- The search box filters the current view by video title or channel name.
+  Searching on the Home tab ignores the 7-day window.
 - The extension fetches each channel's uploads playlist (not search — this
   keeps API quota usage tiny) and classifies each video as a Short if it's
   60 seconds or under.
@@ -50,7 +57,8 @@ personal use — fetching updates costs roughly 2 units per channel per refresh.
   It's accurate for the vast majority of Shorts but not 100% guaranteed.
 - If a collection's feed looks empty right after adding channels, hit
   **Refresh** — the very first add already fetches videos, but a manual
-  refresh re-checks everything.
+  refresh re-checks everything. If a refresh fails for any channel (bad key,
+  quota, network), the reason is shown under the header.
 - If you ever see an API error mentioning quota, you've hit the 10,000
   units/day free cap (very unlikely for personal use) — it resets at
   midnight Pacific time.
