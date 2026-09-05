@@ -1,0 +1,11 @@
+{
+  "name": "yt-collections",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "firefox": "web-ext run --source-dir . --keep-profile-changes"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}

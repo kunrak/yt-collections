@@ -7,7 +7,20 @@
 </head>
 <body>
 
-<div class="app">
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="brand auth-brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Collections</span>
+    </div>
+    <h1>Your YouTube, grouped your way</h1>
+    <p>Sign in to sync collections across browsers. Channel and video data is shared; your collections stay private.</p>
+    <button type="button" class="primary-btn google-btn" id="googleSignInBtn">Sign in with Google</button>
+    <p class="form-hint auth-error" id="authError"></p>
+  </div>
+</div>
+
+<div class="app" id="app" hidden>
 
   <aside class="sidebar">
     <div class="brand">
@@ -15,11 +28,11 @@
       <span class="brand-name">Collections</span>
     </div>
 
-    <nav class="collection-list" id="collectionList"></nav>
-
-    <button type="button" class="new-collection-btn" id="newCollectionBtn">+ New collection</button>
-
-    <p class="api-key-banner" id="apiKeyBanner" hidden>Add a YouTube Data API key in Settings to load videos.</p>
+    <div class="sidebar-scroll">
+      <button type="button" class="collection-item home-nav" id="homeNavBtn">Home</button>
+      <nav class="collection-list" id="collectionList"></nav>
+      <button type="button" class="new-collection-btn" id="newCollectionBtn">+ New collection</button>
+    </div>
 
     <button type="button" class="settings-btn" id="settingsBtn">Settings</button>
   </aside>
@@ -36,24 +49,28 @@
         <div class="tab-switch" id="tabSwitch" role="tablist">
           <button class="tab-btn active" data-tab="videos" role="tab">Videos</button>
           <button class="tab-btn" data-tab="shorts" role="tab">Shorts</button>
+          <button class="tab-btn" data-tab="live" role="tab">Live</button>
         </div>
-        <button class="icon-btn" id="manageChannelsBtn" title="Manage channels">Channels</button>
-        <button class="icon-btn" id="refreshBtn" title="Refresh now">Refresh</button>
+        <label class="watch-toggle">
+          <input type="checkbox" id="hideWatchedToggle" />
+          <span>Hide watched</span>
+        </label>
+        <button type="button" class="icon-btn" id="manageChannelsBtn" title="Manage channels">Channels</button>
+        <button type="button" class="icon-btn" id="refreshBtn" title="Refresh now">Refresh</button>
       </div>
     </header>
 
     <section class="feed" id="feed"></section>
 
     <div class="empty-state" id="emptyState" hidden>
-      <p class="empty-title">No collections yet</p>
-      <p class="empty-sub">Create a collection and add a few channels to build your first feed.</p>
-      <button class="primary-btn" id="emptyCreateBtn">Create your first collection</button>
+      <p class="empty-title" id="emptyTitle">No collections yet</p>
+      <p class="empty-sub" id="emptySub">Create a collection and add a few channels to build your first feed.</p>
+      <button type="button" class="primary-btn" id="emptyCreateBtn">Create your first collection</button>
     </div>
 
   </main>
 </div>
 
-<!-- Manage channels panel -->
 <div class="modal-backdrop" id="channelsModal" hidden>
   <div class="modal">
     <div class="modal-header">
@@ -71,7 +88,6 @@
   </div>
 </div>
 
-<!-- Settings panel -->
 <div class="modal-backdrop" id="settingsModal" hidden>
   <div class="modal">
     <div class="modal-header">
@@ -79,22 +95,23 @@
       <button type="button" class="close-btn" data-close="settingsModal">Close</button>
     </div>
 
-    <label class="field-label" for="apiKeyInput">YouTube Data API key</label>
-    <input type="password" id="apiKeyInput" placeholder="AIza..." />
-    <p class="form-hint">
-      Create a free key in the Google Cloud Console (enable "YouTube Data API v3"),
-      then paste it here. It's stored only in this browser.
-    </p>
-    <button class="primary-btn" id="saveApiKeyBtn">Save key</button>
+    <p class="form-hint" id="signedInAs"></p>
+    <button type="button" class="icon-btn" id="signOutBtn">Sign out</button>
+
+    <label class="field-label" for="oauthRedirectUrl">OAuth redirect URL</label>
+    <div class="redirect-row">
+      <input type="text" id="oauthRedirectUrl" readonly />
+      <button type="button" class="icon-btn" id="copyRedirectBtn">Copy</button>
+    </div>
+    <p class="form-hint">Add this URL under Supabase → Authentication → URL Configuration → Redirect URLs.</p>
 
     <div class="danger-zone">
       <h3>Delete this collection</h3>
-      <button class="danger-btn" id="deleteCollectionBtn">Delete "<span id="deleteCollectionName"></span>"</button>
+      <button type="button" class="danger-btn" id="deleteCollectionBtn">Delete "<span id="deleteCollectionName"></span>"</button>
     </div>
   </div>
 </div>
 
-<!-- New collection panel -->
 <div class="modal-backdrop" id="newCollectionModal" hidden>
   <div class="modal">
     <div class="modal-header">
@@ -109,6 +126,6 @@
   </div>
 </div>
 
-<script src="dashboard.js"></script>
+<script src="dist/dashboard.js"></script>
 </body>
 </html>
