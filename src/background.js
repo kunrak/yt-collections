@@ -96,87 +96,92 @@ async function scrapeVideos(channelId, isShorts, isLive) {
     console.log(`Found ${items.length} items in grid`);
 
     const videos = [];
+    let continuationToken = null;
+    let pageCount = 0;
+    const maxPages = 5; // Limit to 5 pages to avoid excessive requests
 
-    for (const item of items) {
-      let videoId, title, thumbnail, url, publishedAt;
+    // Function to process items from any page
+    const processItems = (items) => {
+      for (const item of items) {
+        let videoId, title, thumbnail, url, publishedAt;
 
-      if (isShorts) {
-        // Handle new shorts structure with shortsLockupViewModel
-        const shortsData =
-          item.richItemRenderer?.content?.shortsLockupViewModel;
-        if (!shortsData) continue;
+        if (isShorts) {
+          // Handle new shorts structure with shortsLockupViewModel
+          const shortsData =
+            item.richItemRenderer?.content?.shortsLockupViewModel;
+          if (!shortsData) continue;
 
-        // Extract video ID from entityId (format: "shorts-shelf-item-{videoId}")
-        const entityId = shortsData.entityId || "";
-        videoId = entityId.replace("shorts-shelf-item-", "");
+          // Extract video ID from entityId (format: "shorts-shelf-item-{videoId}")
+          const entityId = shortsData.entityId || "";
+          videoId = entityId.replace("shorts-shelf-item-", "");
 
-        // Extract title from accessibilityText - YouTube formats it as "Title – X views – play Short"
-        const accessibilityText = shortsData.accessibilityText || "";
-        // Split on " – " and take the first part, then remove any remaining " – play Short" parts
-        if (accessibilityText) {
-          const parts = accessibilityText.split(" – ");
-          title = parts[0].trim();
-          // Remove any remaining "play Short" suffix
-          title = title.replace("play Short", "").trim();
-        }
+          // Extract title from accessibilityText - YouTube formats it as "Title – X views – play Short"
+          const accessibilityText = shortsData.accessibilityText || "";
+          // Split on " – " and take the first part, then remove any remaining " – play Short" parts
+          if (accessibilityText) {
+            const parts = accessibilityText.split(" – ");
+            title = parts[0].trim();
+            // Remove any remaining "play Short" suffix
+            title = title.replace("play Short", "").trim();
+          }
 
-        // If title is still empty, try other paths
-        if (!title || title.trim() === "") {
+          // If title is still empty, try other paths
+          if (!title || title.trim() === "") {
+            title =
+              shortsData.viewModel?.title?.content ||
+              shortsData.headline?.simpleText ||
+              shortsData.metadata?.title?.content ||
+              shortsData.title?.simpleText ||
+              "Short";
+          }
+
+          // Extract thumbnail from the correct path in shorts structure
+          thumbnail =
+            shortsData.onTap?.innertubeCommand?.reelWatchEndpoint?.thumbnail
+              ?.thumbnails?.[0]?.url;
+
+          // Extract URL from onTap command
+          url =
+            shortsData.onTap?.innertubeCommand?.commandMetadata
+              ?.webCommandMetadata?.url;
+          if (url && !url.startsWith("http")) {
+            url = `https://www.youtube.com${url}`;
+          }
+
+          // Try to get publishedAt from the full shorts data
+          publishedAt = shortsData.publishedTimeText?.content || null;
+          if (videos.length < 3) {
+            console.log(
+              `Shorts publishedAt raw: "${shortsData.publishedTimeText?.content}", fallback: "${shortsData.publishedTimeText?.accessibilityText || ""}"`
+            );
+          }
+        } else if (isLive) {
+          // Handle live/stream videos - similar structure to regular videos
+          const lockupData = item.richItemRenderer?.content?.lockupViewModel;
+          if (!lockupData) {
+            if (videos.length < 3) console.log("No lockupData found in live item");
+            continue;
+          }
+
+          // Log full item structure to find where titles are stored
+          if (videos.length < 2) {
+            console.log("Full live item structure:", JSON.stringify(item, null, 2));
+          }
+
+          // Extract thumbnail first (it contains the video ID in the URL)
+          thumbnail =
+            lockupData.contentImage?.thumbnailViewModel?.image?.sources?.[0]?.url;
+
+          // Extract video ID from thumbnail URL (format: https://i.ytimg.com/vi/{videoId}/hq720.jpg)
+          if (thumbnail) {
+            const thumbnailMatch = thumbnail.match(/\/vi\/([^\/]+)/);
+            videoId = thumbnailMatch ? thumbnailMatch[1] : null;
+          }
+
+          // Try to extract title from ALL available paths in lockupViewModel
           title =
-            shortsData.viewModel?.title?.content ||
-            shortsData.headline?.simpleText ||
-            shortsData.metadata?.title?.content ||
-            shortsData.title?.simpleText ||
-            "Short";
-        }
-
-        // Extract thumbnail from the correct path in shorts structure
-        thumbnail =
-          shortsData.onTap?.innertubeCommand?.reelWatchEndpoint?.thumbnail
-            ?.thumbnails?.[0]?.url;
-
-        // Extract URL from onTap command
-        url =
-          shortsData.onTap?.innertubeCommand?.commandMetadata
-            ?.webCommandMetadata?.url;
-        if (url && !url.startsWith("http")) {
-          url = `https://www.youtube.com${url}`;
-        }
-
-        // Try to get publishedAt from the full shorts data
-        publishedAt = shortsData.publishedTimeText?.content || null;
-        if (videos.length < 3) {
-          console.log(
-            `Shorts publishedAt raw: "${shortsData.publishedTimeText?.content}", fallback: "${shortsData.publishedTimeText?.accessibilityText || ""}"`
-          );
-        }
-      } else if (isLive) {
-        // Handle live/stream videos - similar structure to regular videos
-        const lockupData = item.richItemRenderer?.content?.lockupViewModel;
-        if (!lockupData) {
-          if (videos.length < 3) console.log("No lockupData found in live item");
-          continue;
-        }
-
-        // Log full item structure to find where titles are stored
-        if (videos.length < 2) {
-          console.log("Full live item structure:", JSON.stringify(item, null, 2));
-        }
-
-        // Extract thumbnail first (it contains the video ID in the URL)
-        thumbnail =
-          lockupData.contentImage?.thumbnailViewModel?.image?.sources?.[0]?.url;
-
-        // Extract video ID from thumbnail URL (format: https://i.ytimg.com/vi/{videoId}/hq720.jpg)
-        if (thumbnail) {
-          const thumbnailMatch = thumbnail.match(/\/vi\/([^\/]+)/);
-          videoId = thumbnailMatch ? thumbnailMatch[1] : null;
-        }
-
-        // Try to extract title from ALL available paths in lockupViewModel
-        title =
-          lockupData.viewModel?.title?.content ||
-          lockupData.headline?.simpleText ||
+            lockupData.viewModel?.title?.content ||
+            lockupData.headline?.simpleText ||
           lockupData.metadata?.lockupMetadataViewModel?.title?.content ||
           lockupData.metadata?.title?.content ||
           lockupData.metadata?.contentTitle?.content ||
@@ -361,8 +366,49 @@ if (videos.length < 3) {
         url: url,
       });
     }
+    };
 
-    console.log(`Successfully scraped ${videos.length} ${tab}`);
+    // Process the first page
+    processItems(items);
+
+    // For shorts, implement pagination to fetch multiple pages
+    if (isShorts) {
+      // Look for continuation token in the richGridRenderer
+      continuationToken = currentTab.content?.richGridRenderer?.continuations?.[0]?.nextContinuationData?.continuation;
+      
+      while (continuationToken && pageCount < maxPages) {
+        pageCount++;
+        console.log(`Fetching shorts page ${pageCount + 1} for channel ${channelId}`);
+        
+        try {
+          // Build the continuation URL using the same HTML format as the initial request
+          const continuationUrl = `https://www.youtube.com/channel/${channelId}/${tab}?pbj=1&ctoken=${continuationToken}`;
+          const continuationHtml = await fetchHtml(continuationUrl);
+          const continuationData = extractInitialData(continuationHtml);
+          
+          // Extract items from the continuation response
+          const continuationItems = continuationData?.continuationContents?.richGridContinuation?.contents || [];
+          console.log(`Found ${continuationItems.length} items on page ${pageCount + 1}`);
+          
+          if (continuationItems.length === 0) {
+            console.log("No more items found, stopping pagination");
+            break;
+          }
+          
+          // Process the continuation items
+          processItems(continuationItems);
+          
+          // Get the next continuation token
+          continuationToken = continuationData?.continuationContents?.richGridContinuation?.continuations?.[0]?.nextContinuationData?.continuation;
+          
+        } catch (err) {
+          console.error(`Error fetching continuation page ${pageCount + 1}:`, err);
+          break;
+        }
+      }
+    }
+
+    console.log(`Successfully scraped ${videos.length} ${tab} from ${pageCount + 1} page(s)`);
     return videos;
   } catch (err) {
     console.error(`Error scraping ${tab} for channel ${channelId}:`, err);
@@ -489,19 +535,31 @@ async function refreshChannels(channelIds) {
   const stored = await storageGet(VIDEOS_KEY);
   let allVideos = stored[VIDEOS_KEY] || [];
 
+  console.log(`Refreshing ${channelIds.length} channels:`, channelIds);
+
   // Remove old videos for these channels to replace them
   allVideos = allVideos.filter((v) => !channelIds.includes(v.channel_id));
 
   for (const id of channelIds) {
     try {
+      console.log(`Starting to scrape channel ${id}`);
       const videos = await scrapeVideos(id, false, false);
+      console.log(`Got ${videos.length} videos from channel ${id}`);
+      
       const shorts = await scrapeVideos(id, true, false);
+      console.log(`Got ${shorts.length} shorts from channel ${id}`);
+      
       const live = await scrapeVideos(id, false, true);
+      console.log(`Got ${live.length} live streams from channel ${id}`);
+      
       allVideos.push(...videos, ...shorts, ...live);
+      console.log(`Total videos after adding channel ${id}: ${allVideos.length}`);
     } catch (err) {
       console.error(`Failed to refresh channel ${id}:`, err);
     }
   }
+
+  console.log(`Finished refreshing all channels. Total videos: ${allVideos.length}`);
 
   // Keep only the latest 1000 videos to avoid hitting storage limits
   if (allVideos.length > 1000) {

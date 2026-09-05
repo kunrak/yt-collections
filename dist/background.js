@@ -75,159 +75,188 @@
       const items = currentTab.content?.richGridRenderer?.contents || [];
       console.log(`Found ${items.length} items in grid`);
       const videos = [];
-      for (const item of items) {
-        let videoId, title, thumbnail, url, publishedAt;
-        if (isShorts) {
-          const shortsData = item.richItemRenderer?.content?.shortsLockupViewModel;
-          if (!shortsData) continue;
-          const entityId = shortsData.entityId || "";
-          videoId = entityId.replace("shorts-shelf-item-", "");
-          const accessibilityText = shortsData.accessibilityText || "";
-          if (accessibilityText) {
-            const parts = accessibilityText.split(" \u2013 ");
-            title = parts[0].trim();
-            title = title.replace("play Short", "").trim();
-          }
-          if (!title || title.trim() === "") {
-            title = shortsData.viewModel?.title?.content || shortsData.headline?.simpleText || shortsData.metadata?.title?.content || shortsData.title?.simpleText || "Short";
-          }
-          thumbnail = shortsData.onTap?.innertubeCommand?.reelWatchEndpoint?.thumbnail?.thumbnails?.[0]?.url;
-          url = shortsData.onTap?.innertubeCommand?.commandMetadata?.webCommandMetadata?.url;
-          if (url && !url.startsWith("http")) {
-            url = `https://www.youtube.com${url}`;
-          }
-          publishedAt = shortsData.publishedTimeText?.content || null;
-          if (videos.length < 3) {
-            console.log(
-              `Shorts publishedAt raw: "${shortsData.publishedTimeText?.content}", fallback: "${shortsData.publishedTimeText?.accessibilityText || ""}"`
-            );
-          }
-        } else if (isLive) {
-          const lockupData = item.richItemRenderer?.content?.lockupViewModel;
-          if (!lockupData) {
-            if (videos.length < 3) console.log("No lockupData found in live item");
-            continue;
-          }
-          if (videos.length < 2) {
-            console.log("Full live item structure:", JSON.stringify(item, null, 2));
-          }
-          thumbnail = lockupData.contentImage?.thumbnailViewModel?.image?.sources?.[0]?.url;
-          if (thumbnail) {
-            const thumbnailMatch = thumbnail.match(/\/vi\/([^\/]+)/);
-            videoId = thumbnailMatch ? thumbnailMatch[1] : null;
-          }
-          title = lockupData.viewModel?.title?.content || lockupData.headline?.simpleText || lockupData.metadata?.lockupMetadataViewModel?.title?.content || lockupData.metadata?.title?.content || lockupData.metadata?.contentTitle?.content || lockupData.contentTitle?.content || lockupData.accessibilityText || lockupData.title?.simpleText || "";
-          if (!title || title.trim() === "") {
-            title = item.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.videoRenderer?.title?.simpleText || item.richItemRenderer?.content?.gridVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.gridVideoRenderer?.title?.simpleText || item.richItemRenderer?.content?.compactVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.compactVideoRenderer?.title?.simpleText || "";
-          }
-          if (!title || title.trim() === "") {
-            const label = lockupData.rendererContext?.accessibilityContext?.label || "";
-            if (label) {
-              const durationMatch = label.match(/\s+\d+[:\s]\d+.*$/);
-              title = durationMatch ? label.replace(durationMatch[0], "") : label;
+      let continuationToken = null;
+      let pageCount = 0;
+      const maxPages = 5;
+      const processItems = (items2) => {
+        for (const item of items2) {
+          let videoId, title, thumbnail, url, publishedAt;
+          if (isShorts) {
+            const shortsData = item.richItemRenderer?.content?.shortsLockupViewModel;
+            if (!shortsData) continue;
+            const entityId = shortsData.entityId || "";
+            videoId = entityId.replace("shorts-shelf-item-", "");
+            const accessibilityText = shortsData.accessibilityText || "";
+            if (accessibilityText) {
+              const parts = accessibilityText.split(" \u2013 ");
+              title = parts[0].trim();
+              title = title.replace("play Short", "").trim();
             }
-          }
-          if (videos.length < 3) {
-            console.log(
-              `Live video title extraction attempts - viewModel title: "${lockupData.viewModel?.title?.content}", headline: "${lockupData.headline?.simpleText}", lockupMetadata title: "${lockupData.metadata?.lockupMetadataViewModel?.title?.content}", metadata title: "${lockupData.metadata?.title?.content}", videoRenderer: "${item.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.videoRenderer?.title?.simpleText || ""}", gridVideoRenderer: "${item.richItemRenderer?.content?.gridVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.gridVideoRenderer?.title?.simpleText || ""}", final title: "${title}"`
-            );
-          }
-          publishedAt = null;
-          const metadataRows = lockupData.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows || [];
-          if (metadataRows.length > 0 && metadataRows[0].metadataParts) {
-            const parts = metadataRows[0].metadataParts;
-            for (const part of parts) {
-              if (part.text?.content && (part.text.content.includes("ago") || part.text.content.includes("Streamed") || part.text.content.includes("Scheduled"))) {
-                publishedAt = part.text.content;
-                break;
+            if (!title || title.trim() === "") {
+              title = shortsData.viewModel?.title?.content || shortsData.headline?.simpleText || shortsData.metadata?.title?.content || shortsData.title?.simpleText || "Short";
+            }
+            thumbnail = shortsData.onTap?.innertubeCommand?.reelWatchEndpoint?.thumbnail?.thumbnails?.[0]?.url;
+            url = shortsData.onTap?.innertubeCommand?.commandMetadata?.webCommandMetadata?.url;
+            if (url && !url.startsWith("http")) {
+              url = `https://www.youtube.com${url}`;
+            }
+            publishedAt = shortsData.publishedTimeText?.content || null;
+            if (videos.length < 3) {
+              console.log(
+                `Shorts publishedAt raw: "${shortsData.publishedTimeText?.content}", fallback: "${shortsData.publishedTimeText?.accessibilityText || ""}"`
+              );
+            }
+          } else if (isLive) {
+            const lockupData = item.richItemRenderer?.content?.lockupViewModel;
+            if (!lockupData) {
+              if (videos.length < 3) console.log("No lockupData found in live item");
+              continue;
+            }
+            if (videos.length < 2) {
+              console.log("Full live item structure:", JSON.stringify(item, null, 2));
+            }
+            thumbnail = lockupData.contentImage?.thumbnailViewModel?.image?.sources?.[0]?.url;
+            if (thumbnail) {
+              const thumbnailMatch = thumbnail.match(/\/vi\/([^\/]+)/);
+              videoId = thumbnailMatch ? thumbnailMatch[1] : null;
+            }
+            title = lockupData.viewModel?.title?.content || lockupData.headline?.simpleText || lockupData.metadata?.lockupMetadataViewModel?.title?.content || lockupData.metadata?.title?.content || lockupData.metadata?.contentTitle?.content || lockupData.contentTitle?.content || lockupData.accessibilityText || lockupData.title?.simpleText || "";
+            if (!title || title.trim() === "") {
+              title = item.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.videoRenderer?.title?.simpleText || item.richItemRenderer?.content?.gridVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.gridVideoRenderer?.title?.simpleText || item.richItemRenderer?.content?.compactVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.compactVideoRenderer?.title?.simpleText || "";
+            }
+            if (!title || title.trim() === "") {
+              const label = lockupData.rendererContext?.accessibilityContext?.label || "";
+              if (label) {
+                const durationMatch = label.match(/\s+\d+[:\s]\d+.*$/);
+                title = durationMatch ? label.replace(durationMatch[0], "") : label;
               }
             }
-            if (!publishedAt && parts.length > 1) {
-              publishedAt = parts[parts.length - 1]?.text?.content || null;
+            if (videos.length < 3) {
+              console.log(
+                `Live video title extraction attempts - viewModel title: "${lockupData.viewModel?.title?.content}", headline: "${lockupData.headline?.simpleText}", lockupMetadata title: "${lockupData.metadata?.lockupMetadataViewModel?.title?.content}", metadata title: "${lockupData.metadata?.title?.content}", videoRenderer: "${item.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.videoRenderer?.title?.simpleText || ""}", gridVideoRenderer: "${item.richItemRenderer?.content?.gridVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.gridVideoRenderer?.title?.simpleText || ""}", final title: "${title}"`
+              );
             }
-          }
-          if (!publishedAt) {
-            publishedAt = lockupData.metadata?.publishedTimeText?.content || null;
-          }
-          url = videoId ? `https://www.youtube.com/watch?v=${videoId}` : null;
-          if (videos.length < 3) {
-            console.log(
-              `Live publishedAt raw: "${publishedAt}", from metadataRows: ${metadataRows.length > 0}`
-            );
-          }
-        } else {
-          const lockupData = item.richItemRenderer?.content?.lockupViewModel;
-          if (!lockupData) {
-            if (videos.length < 3) console.log("No lockupData found in item");
-            continue;
-          }
-          if (videos.length < 2) {
-            console.log("Full item structure:", JSON.stringify(item, null, 2));
-          }
-          thumbnail = lockupData.contentImage?.thumbnailViewModel?.image?.sources?.[0]?.url;
-          if (thumbnail) {
-            const thumbnailMatch = thumbnail.match(/\/vi\/([^\/]+)/);
-            videoId = thumbnailMatch ? thumbnailMatch[1] : null;
-          }
-          title = lockupData.viewModel?.title?.content || lockupData.headline?.simpleText || lockupData.metadata?.lockupMetadataViewModel?.title?.content || lockupData.metadata?.title?.content || lockupData.metadata?.contentTitle?.content || lockupData.contentTitle?.content || lockupData.accessibilityText || lockupData.title?.simpleText || "";
-          if (!title || title.trim() === "") {
-            title = item.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.videoRenderer?.title?.simpleText || item.richItemRenderer?.content?.gridVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.gridVideoRenderer?.title?.simpleText || item.richItemRenderer?.content?.compactVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.compactVideoRenderer?.title?.simpleText || "";
-          }
-          if (!title || title.trim() === "") {
-            const label = lockupData.rendererContext?.accessibilityContext?.label || "";
-            if (label) {
-              const durationMatch = label.match(/\s+\d+[:\s]\d+.*$/);
-              title = durationMatch ? label.replace(durationMatch[0], "") : label;
-            }
-          }
-          if (videos.length < 3) {
-            console.log(
-              `Video title extraction attempts - viewModel title: "${lockupData.viewModel?.title?.content}", headline: "${lockupData.headline?.simpleText}", lockupMetadata title: "${lockupData.metadata?.lockupMetadataViewModel?.title?.content}", metadata title: "${lockupData.metadata?.title?.content}", videoRenderer: "${item.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.videoRenderer?.title?.simpleText || ""}", gridVideoRenderer: "${item.richItemRenderer?.content?.gridVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.gridVideoRenderer?.title?.simpleText || ""}", final title: "${title}"`
-            );
-          }
-          publishedAt = null;
-          const metadataRows = lockupData.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows || [];
-          if (metadataRows.length > 0 && metadataRows[0].metadataParts) {
-            const parts = metadataRows[0].metadataParts;
-            for (const part of parts) {
-              if (part.text?.content && (part.text.content.includes("ago") || part.text.content.includes("Streamed") || part.text.content.includes("Scheduled"))) {
-                publishedAt = part.text.content;
-                break;
+            publishedAt = null;
+            const metadataRows = lockupData.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows || [];
+            if (metadataRows.length > 0 && metadataRows[0].metadataParts) {
+              const parts = metadataRows[0].metadataParts;
+              for (const part of parts) {
+                if (part.text?.content && (part.text.content.includes("ago") || part.text.content.includes("Streamed") || part.text.content.includes("Scheduled"))) {
+                  publishedAt = part.text.content;
+                  break;
+                }
+              }
+              if (!publishedAt && parts.length > 1) {
+                publishedAt = parts[parts.length - 1]?.text?.content || null;
               }
             }
-            if (!publishedAt && parts.length > 1) {
-              publishedAt = parts[parts.length - 1]?.text?.content || null;
+            if (!publishedAt) {
+              publishedAt = lockupData.metadata?.publishedTimeText?.content || null;
+            }
+            url = videoId ? `https://www.youtube.com/watch?v=${videoId}` : null;
+            if (videos.length < 3) {
+              console.log(
+                `Live publishedAt raw: "${publishedAt}", from metadataRows: ${metadataRows.length > 0}`
+              );
+            }
+          } else {
+            const lockupData = item.richItemRenderer?.content?.lockupViewModel;
+            if (!lockupData) {
+              if (videos.length < 3) console.log("No lockupData found in item");
+              continue;
+            }
+            if (videos.length < 2) {
+              console.log("Full item structure:", JSON.stringify(item, null, 2));
+            }
+            thumbnail = lockupData.contentImage?.thumbnailViewModel?.image?.sources?.[0]?.url;
+            if (thumbnail) {
+              const thumbnailMatch = thumbnail.match(/\/vi\/([^\/]+)/);
+              videoId = thumbnailMatch ? thumbnailMatch[1] : null;
+            }
+            title = lockupData.viewModel?.title?.content || lockupData.headline?.simpleText || lockupData.metadata?.lockupMetadataViewModel?.title?.content || lockupData.metadata?.title?.content || lockupData.metadata?.contentTitle?.content || lockupData.contentTitle?.content || lockupData.accessibilityText || lockupData.title?.simpleText || "";
+            if (!title || title.trim() === "") {
+              title = item.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.videoRenderer?.title?.simpleText || item.richItemRenderer?.content?.gridVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.gridVideoRenderer?.title?.simpleText || item.richItemRenderer?.content?.compactVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.compactVideoRenderer?.title?.simpleText || "";
+            }
+            if (!title || title.trim() === "") {
+              const label = lockupData.rendererContext?.accessibilityContext?.label || "";
+              if (label) {
+                const durationMatch = label.match(/\s+\d+[:\s]\d+.*$/);
+                title = durationMatch ? label.replace(durationMatch[0], "") : label;
+              }
+            }
+            if (videos.length < 3) {
+              console.log(
+                `Video title extraction attempts - viewModel title: "${lockupData.viewModel?.title?.content}", headline: "${lockupData.headline?.simpleText}", lockupMetadata title: "${lockupData.metadata?.lockupMetadataViewModel?.title?.content}", metadata title: "${lockupData.metadata?.title?.content}", videoRenderer: "${item.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.videoRenderer?.title?.simpleText || ""}", gridVideoRenderer: "${item.richItemRenderer?.content?.gridVideoRenderer?.title?.runs?.[0]?.text || item.richItemRenderer?.content?.gridVideoRenderer?.title?.simpleText || ""}", final title: "${title}"`
+              );
+            }
+            publishedAt = null;
+            const metadataRows = lockupData.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows || [];
+            if (metadataRows.length > 0 && metadataRows[0].metadataParts) {
+              const parts = metadataRows[0].metadataParts;
+              for (const part of parts) {
+                if (part.text?.content && (part.text.content.includes("ago") || part.text.content.includes("Streamed") || part.text.content.includes("Scheduled"))) {
+                  publishedAt = part.text.content;
+                  break;
+                }
+              }
+              if (!publishedAt && parts.length > 1) {
+                publishedAt = parts[parts.length - 1]?.text?.content || null;
+              }
+            }
+            if (!publishedAt) {
+              publishedAt = lockupData.metadata?.publishedTimeText?.content || null;
+            }
+            url = videoId ? `https://www.youtube.com/watch?v=${videoId}` : null;
+            if (videos.length < 3) {
+              console.log(
+                `Extracted video - ID: ${videoId}, URL: ${url}, Title: ${title}, Thumbnail: ${thumbnail}`
+              );
             }
           }
-          if (!publishedAt) {
-            publishedAt = lockupData.metadata?.publishedTimeText?.content || null;
-          }
-          url = videoId ? `https://www.youtube.com/watch?v=${videoId}` : null;
+          if (!videoId || !url) continue;
+          const finalPublishedAt = publishedAt ? parsePublishedTime(publishedAt) : (/* @__PURE__ */ new Date()).toISOString();
           if (videos.length < 3) {
             console.log(
-              `Extracted video - ID: ${videoId}, URL: ${url}, Title: ${title}, Thumbnail: ${thumbnail}`
+              `Parsed time for ${isShorts ? "short" : isLive ? "live" : "video"} ${videoId}: raw="${publishedAt}", parsed="${finalPublishedAt}"`
             );
           }
+          videos.push({
+            id: videoId,
+            channel_id: channelId,
+            title: title || "Unknown title",
+            thumbnail: thumbnail || "",
+            published_at: finalPublishedAt,
+            is_short: isShorts,
+            is_live: isLive,
+            url
+          });
         }
-        if (!videoId || !url) continue;
-        const finalPublishedAt = publishedAt ? parsePublishedTime(publishedAt) : (/* @__PURE__ */ new Date()).toISOString();
-        if (videos.length < 3) {
-          console.log(
-            `Parsed time for ${isShorts ? "short" : isLive ? "live" : "video"} ${videoId}: raw="${publishedAt}", parsed="${finalPublishedAt}"`
-          );
+      };
+      processItems(items);
+      if (isShorts) {
+        continuationToken = currentTab.content?.richGridRenderer?.continuations?.[0]?.nextContinuationData?.continuation;
+        while (continuationToken && pageCount < maxPages) {
+          pageCount++;
+          console.log(`Fetching shorts page ${pageCount + 1} for channel ${channelId}`);
+          try {
+            const continuationUrl = `https://www.youtube.com/channel/${channelId}/${tab}?pbj=1&ctoken=${continuationToken}`;
+            const continuationHtml = await fetchHtml(continuationUrl);
+            const continuationData = extractInitialData(continuationHtml);
+            const continuationItems = continuationData?.continuationContents?.richGridContinuation?.contents || [];
+            console.log(`Found ${continuationItems.length} items on page ${pageCount + 1}`);
+            if (continuationItems.length === 0) {
+              console.log("No more items found, stopping pagination");
+              break;
+            }
+            processItems(continuationItems);
+            continuationToken = continuationData?.continuationContents?.richGridContinuation?.continuations?.[0]?.nextContinuationData?.continuation;
+          } catch (err) {
+            console.error(`Error fetching continuation page ${pageCount + 1}:`, err);
+            break;
+          }
         }
-        videos.push({
-          id: videoId,
-          channel_id: channelId,
-          title: title || "Unknown title",
-          thumbnail: thumbnail || "",
-          published_at: finalPublishedAt,
-          is_short: isShorts,
-          is_live: isLive,
-          url
-        });
       }
-      console.log(`Successfully scraped ${videos.length} ${tab}`);
+      console.log(`Successfully scraped ${videos.length} ${tab} from ${pageCount + 1} page(s)`);
       return videos;
     } catch (err) {
       console.error(`Error scraping ${tab} for channel ${channelId}:`, err);
@@ -323,17 +352,24 @@
   async function refreshChannels(channelIds) {
     const stored = await storageGet(VIDEOS_KEY);
     let allVideos = stored[VIDEOS_KEY] || [];
+    console.log(`Refreshing ${channelIds.length} channels:`, channelIds);
     allVideos = allVideos.filter((v) => !channelIds.includes(v.channel_id));
     for (const id of channelIds) {
       try {
+        console.log(`Starting to scrape channel ${id}`);
         const videos = await scrapeVideos(id, false, false);
+        console.log(`Got ${videos.length} videos from channel ${id}`);
         const shorts = await scrapeVideos(id, true, false);
+        console.log(`Got ${shorts.length} shorts from channel ${id}`);
         const live = await scrapeVideos(id, false, true);
+        console.log(`Got ${live.length} live streams from channel ${id}`);
         allVideos.push(...videos, ...shorts, ...live);
+        console.log(`Total videos after adding channel ${id}: ${allVideos.length}`);
       } catch (err) {
         console.error(`Failed to refresh channel ${id}:`, err);
       }
     }
+    console.log(`Finished refreshing all channels. Total videos: ${allVideos.length}`);
     if (allVideos.length > 1e3) {
       allVideos = allVideos.slice(-1e3);
     }

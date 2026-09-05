@@ -484,6 +484,7 @@ input {
 
 .video-card:hover {
   border-color: var(--blue-dim);
+  cursor: pointer;
 }
 
 .video-thumb {

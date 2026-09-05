@@ -20,7 +20,9 @@
           reject(new Error(chrome.runtime.lastError.message));
           return;
         }
-        resolve(response || { ok: false, error: "No response from background script" });
+        resolve(
+          response || { ok: false, error: "No response from background script" }
+        );
       });
     });
   }
@@ -57,7 +59,12 @@
     await storageSet({ ytc_watched: [...state.watchedVideoIds] });
   }
   function toggleWatched(videoId) {
-    console.log("toggleWatched called with:", videoId, "current watched:", state.watchedVideoIds.has(videoId));
+    console.log(
+      "toggleWatched called with:",
+      videoId,
+      "current watched:",
+      state.watchedVideoIds.has(videoId)
+    );
     if (state.watchedVideoIds.has(videoId)) {
       state.watchedVideoIds.delete(videoId);
     } else {
@@ -139,15 +146,30 @@
     } else if (state.view === "channel") {
       channelIds = state.activeChannelId ? [state.activeChannelId] : [];
     }
+    console.log(
+      `Loading feed for view: ${state.view}, tab: ${state.activeTab}, channelIds:`,
+      channelIds
+    );
     if (channelIds.length === 0) {
       state.feedVideos = [];
       return;
     }
     const localData = await storageGet("ytc_videos");
     let videos = localData.ytc_videos || [];
-    videos = videos.filter((v) => channelIds.includes(v.channel_id) && v.is_short === wantShort && v.is_live === wantLive);
+    console.log(`Total videos in storage: ${videos.length}`);
+    console.log(`Filtering for wantShort: ${wantShort}, wantLive: ${wantLive}`);
+    videos = videos.filter(
+      (v) => channelIds.includes(v.channel_id) && v.is_short === wantShort && v.is_live === wantLive
+    );
+    console.log(`Videos after filtering: ${videos.length}`);
+    const channelCounts = {};
+    videos.forEach((v) => {
+      channelCounts[v.channel_id] = (channelCounts[v.channel_id] || 0) + 1;
+    });
+    console.log(`Videos by channel:`, channelCounts);
     videos.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
-    state.feedVideos = videos.slice(0, 30);
+    state.feedVideos = videos.slice(0, 50);
+    console.log(`Final feed videos: ${state.feedVideos.length}`);
   }
   function showSignedIn() {
     el("authScreen").hidden = true;
@@ -244,7 +266,10 @@
       });
       item.querySelector(".delete-btn").addEventListener("click", async (e) => {
         e.stopPropagation();
-        if (!confirm(`Delete "${col.name}"? This won't unfollow the channels, just removes this collection.`)) return;
+        if (!confirm(
+          `Delete "${col.name}"? This won't unfollow the channels, just removes this collection.`
+        ))
+          return;
         state.collections = state.collections.filter((c) => c.id !== col.id);
         await saveCollections();
         await loadCollections();
@@ -385,8 +410,14 @@
     state.activeCollectionId = null;
     renderAll();
   });
-  el("newCollectionBtn").addEventListener("click", () => openModal("newCollectionModal"));
-  el("emptyCreateBtn").addEventListener("click", () => openModal("newCollectionModal"));
+  el("newCollectionBtn").addEventListener(
+    "click",
+    () => openModal("newCollectionModal")
+  );
+  el("emptyCreateBtn").addEventListener(
+    "click",
+    () => openModal("newCollectionModal")
+  );
   el("newCollectionForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = el("newCollectionInput").value.trim();
@@ -405,7 +436,10 @@
   el("deleteCollectionBtn").addEventListener("click", async () => {
     const col = activeCollection();
     if (!col) return;
-    if (!confirm(`Delete "${col.name}"? This won't unfollow the channels, just removes this collection.`)) return;
+    if (!confirm(
+      `Delete "${col.name}"? This won't unfollow the channels, just removes this collection.`
+    ))
+      return;
     state.collections = state.collections.filter((c) => c.id !== col.id);
     await saveCollections();
     closeModal("settingsModal");
@@ -503,9 +537,11 @@
     submitBtn.disabled = false;
     await loadCollections();
     renderChannelManageList();
-    sendMessage({ type: "REFRESH_CHANNELS", channelIds: [channel.id] }).then(() => {
-      loadFeed().then(renderFeed);
-    });
+    sendMessage({ type: "REFRESH_CHANNELS", channelIds: [channel.id] }).then(
+      () => {
+        loadFeed().then(renderFeed);
+      }
+    );
     await renderAll();
   });
   el("refreshBtn").addEventListener("click", async () => {
@@ -518,8 +554,10 @@
     btn.textContent = "Refreshing...";
     console.log("Refresh clicked, channels:", uniqueChannelIds().length);
     let channelIds = [];
-    if (state.view === "channel" && state.activeChannelId) channelIds = [state.activeChannelId];
-    else if (state.view === "collection") channelIds = activeCollection()?.channelIds || [];
+    if (state.view === "channel" && state.activeChannelId)
+      channelIds = [state.activeChannelId];
+    else if (state.view === "collection")
+      channelIds = activeCollection()?.channelIds || [];
     else channelIds = uniqueChannelIds();
     let res;
     try {
@@ -572,7 +610,9 @@
   });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    const open = [...document.querySelectorAll(".modal-backdrop")].find((m) => !m.hidden);
+    const open = [...document.querySelectorAll(".modal-backdrop")].find(
+      (m) => !m.hidden
+    );
     if (open) open.hidden = true;
   });
   (async function init() {

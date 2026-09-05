@@ -20,7 +20,9 @@ function sendMessage(msg) {
         reject(new Error(chrome.runtime.lastError.message));
         return;
       }
-      resolve(response || { ok: false, error: "No response from background script" });
+      resolve(
+        response || { ok: false, error: "No response from background script" },
+      );
     });
   });
 }
@@ -74,21 +76,30 @@ async function saveWatchedVideos() {
 }
 
 function toggleWatched(videoId) {
-  console.log("toggleWatched called with:", videoId, "current watched:", state.watchedVideoIds.has(videoId));
+  console.log(
+    "toggleWatched called with:",
+    videoId,
+    "current watched:",
+    state.watchedVideoIds.has(videoId),
+  );
   if (state.watchedVideoIds.has(videoId)) {
     state.watchedVideoIds.delete(videoId);
   } else {
     state.watchedVideoIds.add(videoId);
   }
   console.log("after toggle, watched count:", state.watchedVideoIds.size);
-  saveWatchedVideos().then(() => {
-    console.log("saved, re-rendering feed");
-    renderFeed();
-  }).catch(err => console.error("Failed to save watched:", err));
+  saveWatchedVideos()
+    .then(() => {
+      console.log("saved, re-rendering feed");
+      renderFeed();
+    })
+    .catch((err) => console.error("Failed to save watched:", err));
 }
 
 function activeCollection() {
-  return state.collections.find((c) => c.id === state.activeCollectionId) || null;
+  return (
+    state.collections.find((c) => c.id === state.activeCollectionId) || null
+  );
 }
 
 function followedChannels() {
@@ -176,6 +187,11 @@ async function loadFeed() {
     channelIds = state.activeChannelId ? [state.activeChannelId] : [];
   }
 
+  console.log(
+    `Loading feed for view: ${state.view}, tab: ${state.activeTab}, channelIds:`,
+    channelIds,
+  );
+
   if (channelIds.length === 0) {
     state.feedVideos = [];
     return;
@@ -184,20 +200,39 @@ async function loadFeed() {
   const localData = await storageGet("ytc_videos");
   let videos = localData.ytc_videos || [];
 
-  videos = videos.filter(v => channelIds.includes(v.channel_id) && v.is_short === wantShort && v.is_live === wantLive);
-  
+  console.log(`Total videos in storage: ${videos.length}`);
+  console.log(`Filtering for wantShort: ${wantShort}, wantLive: ${wantLive}`);
+
+  videos = videos.filter(
+    (v) =>
+      channelIds.includes(v.channel_id) &&
+      v.is_short === wantShort &&
+      v.is_live === wantLive,
+  );
+
+  console.log(`Videos after filtering: ${videos.length}`);
+
+  // Debug: show channel distribution
+  const channelCounts = {};
+  videos.forEach((v) => {
+    channelCounts[v.channel_id] = (channelCounts[v.channel_id] || 0) + 1;
+  });
+  console.log(`Videos by channel:`, channelCounts);
+
   videos.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
-  state.feedVideos = videos.slice(0, 30);
+  state.feedVideos = videos.slice(0, 50);
+
+  console.log(`Final feed videos: ${state.feedVideos.length}`);
 }
 
 function showSignedIn() {
   el("authScreen").hidden = true;
   el("app").hidden = false;
   // Hide specific UI elements that are no longer needed
-  if(el("manageChannelsBtn")) el("manageChannelsBtn").hidden = false;
-  if(el("signOutBtn")) el("signOutBtn").style.display = 'none';
-  if(el("authError")) el("authError").style.display = 'none';
-  if(el("settingsBtn")) el("settingsBtn").style.display = 'none';
+  if (el("manageChannelsBtn")) el("manageChannelsBtn").hidden = false;
+  if (el("signOutBtn")) el("signOutBtn").style.display = "none";
+  if (el("authError")) el("authError").style.display = "none";
+  if (el("settingsBtn")) el("settingsBtn").style.display = "none";
 }
 
 function renderSidebar() {
@@ -208,7 +243,11 @@ function renderSidebar() {
   list.innerHTML = "";
   for (const col of state.collections) {
     const item = document.createElement("div");
-    item.className = "collection-item" + (state.view === "collection" && col.id === state.activeCollectionId ? " active" : "");
+    item.className =
+      "collection-item" +
+      (state.view === "collection" && col.id === state.activeCollectionId
+        ? " active"
+        : "");
     item.innerHTML = `
       <div class="collection-item-main">
         <span class="collection-name" data-id="${col.id}">${escapeHtml(col.name)}</span>
@@ -226,7 +265,11 @@ function renderSidebar() {
       const ch = state.channelsById[channelId];
       if (!ch) continue;
       const chItem = document.createElement("div");
-      chItem.className = "collection-channel-item" + (state.view === "channel" && ch.id === state.activeChannelId ? " active" : "");
+      chItem.className =
+        "collection-channel-item" +
+        (state.view === "channel" && ch.id === state.activeChannelId
+          ? " active"
+          : "");
       chItem.innerHTML = `
         <img src="${escapeHtml(ch.thumbnail || "")}" alt="" />
         <span class="channel-name">${escapeHtml(ch.title)}</span>
@@ -246,15 +289,17 @@ function renderSidebar() {
       nameEl.addEventListener("click", openVideo);
       chItem.querySelector("img").addEventListener("click", openVideo);
 
-      chItem.querySelector(".remove-channel-btn").addEventListener("click", async (e) => {
-        e.stopPropagation();
-        if (!confirm(`Remove "${ch.title}" from this collection?`)) return;
-        col.channelIds = col.channelIds.filter(id => id !== ch.id);
-        await saveCollections();
-        await loadCollections();
-        renderChannelManageList();
-        await renderAll();
-      });
+      chItem
+        .querySelector(".remove-channel-btn")
+        .addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm(`Remove "${ch.title}" from this collection?`)) return;
+          col.channelIds = col.channelIds.filter((id) => id !== ch.id);
+          await saveCollections();
+          await loadCollections();
+          renderChannelManageList();
+          await renderAll();
+        });
 
       chItem.querySelector(".rename-btn").addEventListener("click", (e) => {
         e.stopPropagation();
@@ -276,8 +321,14 @@ function renderSidebar() {
 
         input.addEventListener("blur", finish);
         input.addEventListener("keydown", (ev) => {
-          if (ev.key === "Enter") { ev.preventDefault(); input.blur(); }
-          if (ev.key === "Escape") { input.value = currentName; input.blur(); }
+          if (ev.key === "Enter") {
+            ev.preventDefault();
+            input.blur();
+          }
+          if (ev.key === "Escape") {
+            input.value = currentName;
+            input.blur();
+          }
         });
       });
     }
@@ -290,8 +341,13 @@ function renderSidebar() {
 
     item.querySelector(".delete-btn").addEventListener("click", async (e) => {
       e.stopPropagation();
-      if (!confirm(`Delete "${col.name}"? This won't unfollow the channels, just removes this collection.`)) return;
-      state.collections = state.collections.filter(c => c.id !== col.id);
+      if (
+        !confirm(
+          `Delete "${col.name}"? This won't unfollow the channels, just removes this collection.`,
+        )
+      )
+        return;
+      state.collections = state.collections.filter((c) => c.id !== col.id);
       await saveCollections();
       await loadCollections();
       state.view = "home";
@@ -320,8 +376,14 @@ function renderSidebar() {
 
       input.addEventListener("blur", finish);
       input.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter") { ev.preventDefault(); input.blur(); }
-        if (ev.key === "Escape") { input.value = currentName; input.blur(); }
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          input.blur();
+        }
+        if (ev.key === "Escape") {
+          input.value = currentName;
+          input.blur();
+        }
       });
     });
   }
@@ -331,7 +393,8 @@ function renderTopbar() {
   const manageBtn = el("manageChannelsBtn");
   if (state.view === "home") {
     el("collectionTitle").textContent = "Home";
-    el("channelCount").textContent = `${uniqueChannelIds().length} channel${uniqueChannelIds().length === 1 ? "" : "s"} · last 30 days`;
+    el("channelCount").textContent =
+      `${uniqueChannelIds().length} channel${uniqueChannelIds().length === 1 ? "" : "s"} · last 30 days`;
     manageBtn.hidden = true;
   } else if (state.view === "channel") {
     const ch = state.channelsById[state.activeChannelId];
@@ -340,7 +403,9 @@ function renderTopbar() {
     manageBtn.hidden = true;
   } else {
     const col = activeCollection();
-    el("collectionTitle").textContent = col ? col.name : "No collection selected";
+    el("collectionTitle").textContent = col
+      ? col.name
+      : "No collection selected";
     el("channelCount").textContent = col
       ? `${col.channelIds.length} channel${col.channelIds.length === 1 ? "" : "s"}`
       : "";
@@ -357,7 +422,8 @@ function renderFeed() {
   if (state.view === "collection" && !activeCollection()) {
     empty.hidden = false;
     el("emptyTitle").textContent = "No collections yet";
-    el("emptySub").textContent = "Create a collection and add a few channels to build your first feed.";
+    el("emptySub").textContent =
+      "Create a collection and add a few channels to build your first feed.";
     el("emptyCreateBtn").hidden = false;
     feed.hidden = true;
     return;
@@ -374,19 +440,27 @@ function renderFeed() {
     feed.hidden = true;
     el("emptyCreateBtn").hidden = state.collections.length > 0;
     if (state.view === "home") {
-      el("emptyTitle").textContent = uniqueChannelIds().length === 0 ? "Nothing on Home yet" : "No recent videos";
-      el("emptySub").textContent = uniqueChannelIds().length === 0
-        ? "Create a collection and add channels. Their latest videos from the last 30 days will show up here."
-        : state.hideWatched ? "All videos have been watched." : "No videos from the last 30 days in your collections.";
+      el("emptyTitle").textContent =
+        uniqueChannelIds().length === 0
+          ? "Nothing on Home yet"
+          : "No recent videos";
+      el("emptySub").textContent =
+        uniqueChannelIds().length === 0
+          ? "Create a collection and add channels. Their latest videos from the last 30 days will show up here."
+          : state.hideWatched
+            ? "All videos have been watched."
+            : "No videos from the last 30 days in your collections.";
     } else if (state.view === "channel") {
       el("emptyTitle").textContent = "Nothing here yet";
-      el("emptySub").textContent = "No videos from this channel in the last 7 days.";
+      el("emptySub").textContent =
+        "No videos from this channel in the last 7 days.";
     } else {
       const col = activeCollection();
       el("emptyTitle").textContent = "Nothing here yet";
-      el("emptySub").textContent = col?.channelIds.length === 0
-        ? "Add some channels to this collection to start seeing updates."
-        : `No recent ${state.activeTab === "shorts" ? "Shorts" : state.activeTab === "live" ? "live videos" : "videos"} from these channels.`;
+      el("emptySub").textContent =
+        col?.channelIds.length === 0
+          ? "Add some channels to this collection to start seeing updates."
+          : `No recent ${state.activeTab === "shorts" ? "Shorts" : state.activeTab === "live" ? "live videos" : "videos"} from these channels.`;
     }
     return;
   }
@@ -400,7 +474,10 @@ function renderFeed() {
     const isWatched = state.watchedVideoIds.has(v.id);
     console.log("renderFeed video:", v.id, "watched:", isWatched);
     const card = document.createElement("div");
-    card.className = "video-card" + (v.is_short ? " short" : "") + (isWatched ? " watched" : "");
+    card.className =
+      "video-card" +
+      (v.is_short ? " short" : "") +
+      (isWatched ? " watched" : "");
     card.innerHTML = `
       <div class="video-thumb-wrap">
         <img class="video-thumb" src="${escapeHtml(v.thumbnail || "")}" alt="" loading="lazy" />
@@ -445,20 +522,24 @@ el("homeNavBtn").addEventListener("click", () => {
   renderAll();
 });
 
-el("newCollectionBtn").addEventListener("click", () => openModal("newCollectionModal"));
-el("emptyCreateBtn").addEventListener("click", () => openModal("newCollectionModal"));
+el("newCollectionBtn").addEventListener("click", () =>
+  openModal("newCollectionModal"),
+);
+el("emptyCreateBtn").addEventListener("click", () =>
+  openModal("newCollectionModal"),
+);
 
 el("newCollectionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = el("newCollectionInput").value.trim();
   if (!name) return;
-  
+
   console.log("Creating new collection:", name);
 
   const newCol = { id: Date.now().toString(), name, channelIds: [] };
   state.collections.push(newCol);
   await saveCollections();
-  
+
   el("newCollectionInput").value = "";
   closeModal("newCollectionModal");
   await loadCollections();
@@ -470,11 +551,16 @@ el("newCollectionForm").addEventListener("submit", async (e) => {
 el("deleteCollectionBtn").addEventListener("click", async () => {
   const col = activeCollection();
   if (!col) return;
-  if (!confirm(`Delete "${col.name}"? This won't unfollow the channels, just removes this collection.`)) return;
-  
-  state.collections = state.collections.filter(c => c.id !== col.id);
+  if (
+    !confirm(
+      `Delete "${col.name}"? This won't unfollow the channels, just removes this collection.`,
+    )
+  )
+    return;
+
+  state.collections = state.collections.filter((c) => c.id !== col.id);
   await saveCollections();
-  
+
   closeModal("settingsModal");
   await loadCollections();
   state.view = "home";
@@ -485,7 +571,9 @@ el("deleteCollectionBtn").addEventListener("click", async () => {
 el("tabSwitch").addEventListener("click", (e) => {
   const btn = e.target.closest(".tab-btn");
   if (!btn) return;
-  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+  document
+    .querySelectorAll(".tab-btn")
+    .forEach((b) => b.classList.remove("active"));
   btn.classList.add("active");
   state.activeTab = btn.dataset.tab;
   renderAll();
@@ -530,9 +618,9 @@ function renderChannelManageList() {
   list.querySelectorAll(".remove-channel-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const channelId = btn.dataset.id;
-      col.channelIds = col.channelIds.filter(id => id !== channelId);
+      col.channelIds = col.channelIds.filter((id) => id !== channelId);
       await saveCollections();
-      
+
       await loadCollections();
       renderChannelManageList();
       await renderAll();
@@ -581,15 +669,17 @@ el("addChannelForm").addEventListener("submit", async (e) => {
   hint.style.color = "";
   input.value = "";
   submitBtn.disabled = false;
-  
+
   await loadCollections();
   renderChannelManageList();
-  
+
   // Also refresh videos for this new channel
-  sendMessage({ type: "REFRESH_CHANNELS", channelIds: [channel.id] }).then(() => {
-    loadFeed().then(renderFeed);
-  });
-  
+  sendMessage({ type: "REFRESH_CHANNELS", channelIds: [channel.id] }).then(
+    () => {
+      loadFeed().then(renderFeed);
+    },
+  );
+
   await renderAll();
 });
 
@@ -603,8 +693,10 @@ el("refreshBtn").addEventListener("click", async () => {
   btn.textContent = "Refreshing...";
   console.log("Refresh clicked, channels:", uniqueChannelIds().length);
   let channelIds = [];
-  if (state.view === "channel" && state.activeChannelId) channelIds = [state.activeChannelId];
-  else if (state.view === "collection") channelIds = activeCollection()?.channelIds || [];
+  if (state.view === "channel" && state.activeChannelId)
+    channelIds = [state.activeChannelId];
+  else if (state.view === "collection")
+    channelIds = activeCollection()?.channelIds || [];
   else channelIds = uniqueChannelIds();
 
   let res;
@@ -662,7 +754,9 @@ document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
-  const open = [...document.querySelectorAll(".modal-backdrop")].find((m) => !m.hidden);
+  const open = [...document.querySelectorAll(".modal-backdrop")].find(
+    (m) => !m.hidden,
+  );
   if (open) open.hidden = true;
 });
 
