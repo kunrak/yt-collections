@@ -42,6 +42,152 @@
     const months = Math.floor(days / 30);
     return `${months}mo ago`;
   }
+  function setupCollectionDragDrop() {
+    const collectionList = el("collectionList");
+    let dragSource = null;
+    let dragSourceIndex = null;
+    collectionList.addEventListener("dragstart", (e) => {
+      const item = e.target.closest(".collection-item");
+      if (!item || item.id === "homeNavBtn") return;
+      if (e.target.closest("button") || e.target.closest(".collection-toggle"))
+        return;
+      dragSource = item;
+      dragSourceIndex = Array.from(collectionList.children).indexOf(item);
+      item.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", item.dataset.id);
+    });
+    collectionList.addEventListener("dragend", (e) => {
+      if (dragSource) dragSource.classList.remove("dragging");
+      document.querySelectorAll(".collection-item.drag-over").forEach((el2) => {
+        el2.classList.remove("drag-over");
+      });
+      dragSource = null;
+      dragSourceIndex = null;
+    });
+    collectionList.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const afterItem = getDragAfterElement(collectionList, e.clientY);
+      if (dragSource) {
+        if (afterItem == null) {
+          collectionList.appendChild(dragSource);
+        } else {
+          collectionList.insertBefore(dragSource, afterItem);
+        }
+      }
+    });
+    collectionList.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const items = Array.from(collectionList.children).filter(
+        (c) => c.id !== "homeNavBtn"
+      );
+      const newOrder = items.map((item) => item.dataset.id);
+      state.collections.sort((a, b) => {
+        const aIndex = newOrder.indexOf(a.id);
+        const bIndex = newOrder.indexOf(b.id);
+        return aIndex - bIndex;
+      });
+      saveCollections();
+    });
+  }
+  function getDragAfterElement(container, y) {
+    const draggableElements = [
+      ...container.querySelectorAll(".collection-item:not(.dragging)")
+    ].filter((el2) => el2.id !== "homeNavBtn");
+    return draggableElements.reduce(
+      (closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        } else {
+          return closest;
+        }
+      },
+      { offset: Number.NEGATIVE_INFINITY }
+    ).element;
+  }
+  function setupChannelDragDrop() {
+    let channelDragSource = null;
+    let channelDragParent = null;
+    document.addEventListener("dragstart", (e) => {
+      const item = e.target.closest(".collection-channel-item");
+      if (!item) return;
+      if (e.target.closest("button")) return;
+      channelDragSource = item;
+      channelDragParent = item.parentElement;
+      item.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    document.addEventListener("dragend", (e) => {
+      if (channelDragSource) {
+        channelDragSource.classList.remove("dragging");
+      }
+      if (channelDragParent) {
+        channelDragParent.querySelectorAll(".collection-channel-item.drag-over").forEach((el2) => {
+          el2.classList.remove("drag-over");
+        });
+      }
+      channelDragSource = null;
+      channelDragParent = null;
+    });
+    document.addEventListener("dragover", (e) => {
+      const channelItem = e.target.closest(".collection-channel-item");
+      if (!channelItem || !channelDragSource || channelItem === channelDragSource)
+        return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      channelItem.classList.add("drag-over");
+      const afterItem = getDragAfterChannelElement(
+        channelItem.parentElement,
+        e.clientY
+      );
+      if (afterItem == null) {
+        channelItem.parentElement.appendChild(channelDragSource);
+      } else {
+        channelItem.parentElement.insertBefore(channelDragSource, afterItem);
+      }
+    });
+    document.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if (!channelDragSource || !channelDragParent) return;
+      const collectionId = channelDragParent.closest(".collection-item")?.dataset.id;
+      if (!collectionId) return;
+      const collection = state.collections.find((c) => c.id === collectionId);
+      if (!collection) return;
+      const channelItems = Array.from(
+        channelDragParent.querySelectorAll(".collection-channel-item")
+      );
+      const newChannelIds = channelItems.map((item) => {
+        const img = item.querySelector("img");
+        return Object.values(state.channelsById).find(
+          (ch) => ch.thumbnail === (img?.src || "")
+        )?.id;
+      }).filter(Boolean);
+      collection.channelIds = newChannelIds;
+      saveCollections();
+      channelDragSource = null;
+      channelDragParent = null;
+    });
+  }
+  function getDragAfterChannelElement(container, y) {
+    const draggableElements = [
+      ...container.querySelectorAll(".collection-channel-item:not(.dragging)")
+    ];
+    return draggableElements.reduce(
+      (closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        } else {
+          return closest;
+        }
+      },
+      { offset: Number.NEGATIVE_INFINITY }
+    ).element;
+  }
   function uniqueChannelIds() {
     const ids = /* @__PURE__ */ new Set();
     for (const col of state.collections) {
@@ -186,10 +332,13 @@
     list.innerHTML = "";
     for (const col of state.collections) {
       const item = document.createElement("div");
-      item.className = "collection-item" + (state.view === "collection" && col.id === state.activeCollectionId ? " active" : "");
+      item.className = "collection-item" + (state.view === "collection" && col.id === state.activeCollectionId ? " active" : "") + (col.expanded === false ? " collapsed" : "");
+      item.dataset.id = col.id;
+      item.draggable = true;
       item.innerHTML = `
       <div class="collection-item-main">
         <span class="collection-name" data-id="${col.id}">${escapeHtml(col.name)}</span>
+        <div class="collection-toggle ${col.expanded === false ? "collapsed" : "expanded"}" title="Toggle collection"></div>
         <div class="collection-actions">
           <button class="rename-btn" data-id="${col.id}" title="Rename">\u270E</button>
           <button class="delete-btn" data-id="${col.id}" title="Delete">\xD7</button>
@@ -204,6 +353,7 @@
         if (!ch) continue;
         const chItem = document.createElement("div");
         chItem.className = "collection-channel-item" + (state.view === "channel" && ch.id === state.activeChannelId ? " active" : "");
+        chItem.draggable = true;
         chItem.innerHTML = `
         <img src="${escapeHtml(ch.thumbnail || "")}" alt="" />
         <span class="channel-name">${escapeHtml(ch.title)}</span>
@@ -264,6 +414,15 @@
         state.activeCollectionId = col.id;
         renderAll();
       });
+      item.querySelector(".collection-toggle").addEventListener("click", (e) => {
+        col.expanded = col.expanded === false ? true : false;
+        saveCollections().then(() => {
+          const toggleBtn = item.querySelector(".collection-toggle");
+          toggleBtn.className = `collection-toggle ${col.expanded === false ? "collapsed" : "expanded"}`;
+          renderAll();
+        });
+        e.stopPropagation();
+      });
       item.querySelector(".delete-btn").addEventListener("click", async (e) => {
         e.stopPropagation();
         if (!confirm(
@@ -312,7 +471,7 @@
     const manageBtn = el("manageChannelsBtn");
     if (state.view === "home") {
       el("collectionTitle").textContent = "Home";
-      el("channelCount").textContent = `${uniqueChannelIds().length} channel${uniqueChannelIds().length === 1 ? "" : "s"} \xB7 last 30 days`;
+      el("channelCount").textContent = `${uniqueChannelIds().length} channel${uniqueChannelIds().length === 1 ? "" : "s"}`;
       manageBtn.hidden = true;
     } else if (state.view === "channel") {
       const ch = state.channelsById[state.activeChannelId];
@@ -349,7 +508,7 @@
       el("emptyCreateBtn").hidden = state.collections.length > 0;
       if (state.view === "home") {
         el("emptyTitle").textContent = uniqueChannelIds().length === 0 ? "Nothing on Home yet" : "No recent videos";
-        el("emptySub").textContent = uniqueChannelIds().length === 0 ? "Create a collection and add channels. Their latest videos from the last 30 days will show up here." : state.hideWatched ? "All videos have been watched." : "No videos from the last 30 days in your collections.";
+        el("emptySub").textContent = uniqueChannelIds().length === 0 ? "Create a collection and add channels. Their latest videos from the will show up here." : state.hideWatched ? "All videos have been watched." : "No videos from the in your collections.";
       } else if (state.view === "channel") {
         el("emptyTitle").textContent = "Nothing here yet";
         el("emptySub").textContent = "No videos from this channel in the last 7 days.";
@@ -404,6 +563,8 @@
       state.feedVideos = [];
     }
     renderFeed();
+    setupCollectionDragDrop();
+    setupChannelDragDrop();
   }
   el("homeNavBtn").addEventListener("click", () => {
     state.view = "home";

@@ -129,6 +129,15 @@ input {
   white-space: nowrap;
 }
 
+.channel-nav-item.dragging {
+  opacity: 0.5;
+  border: 1px dashed var(--blue);
+}
+
+.channel-nav-item.drag-over {
+  border: 1px dashed var(--blue);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -165,6 +174,7 @@ input {
   cursor: pointer;
   color: var(--text-muted);
   border: 1px solid transparent;
+  transition: background 0.15s;
 }
 
 .collection-item:hover {
@@ -178,6 +188,46 @@ input {
   color: var(--text);
 }
 
+.collection-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.collection-item:hover .collection-actions {
+  display: flex;
+}
+
+.rename-btn,
+.delete-btn,
+.collection-toggle {
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.collection-item.dragging {
+  opacity: 0.5;
+  border: 1px dashed var(--blue);
+}
+
+.collection-item.drag-over {
+  border: 1px dashed var(--blue);
+}
+
+.collection-item-expanded {
+  display: flex;
+}
+
+.collection-item.collapsed .collection-channels {
+  display: none;
+}
+
+.collection-item.collapsed .collection-item-main {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
 .collection-item-main {
   display: flex;
   align-items: center;
@@ -185,20 +235,46 @@ input {
   gap: 6px;
 }
 
+.collection-toggle {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
+}
+
+.collection-item:hover .collection-toggle {
+  opacity: 1;
+}
+
+.collection-item:hover .collection-toggle:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.collection-toggle.collapsed::after {
+  content: "▼";
+}
+
+.collection-toggle.expanded::after {
+  content: "▶";
+}
+
 .collection-name {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.collection-actions {
-  display: none;
-  gap: 4px;
-}
-
-.collection-item:hover .collection-actions {
-  display: flex;
 }
 
 .rename-btn,
@@ -240,6 +316,10 @@ input {
 
 .collection-item .count {
   display: none;
+}
+
+.collection-item.collapsed .collection-toggle.expanded {
+  opacity: 1;
 }
 
 .new-collection-btn,

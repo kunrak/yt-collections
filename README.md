@@ -143,7 +143,7 @@ happen inside Edge Functions using `YOUTUBE_API_KEY`.
 
 ## UI
 
-- **Home** — videos from all of your collections, last 30 days, newest first,
+- **Home** — videos from all of your collections, newest first,
   with a collection-name label on each card.
 - **A collection** — same Videos/Shorts tabs and add-channel flow as before.
 - **Channels** (sidebar) — every distinct channel you follow; click one for
