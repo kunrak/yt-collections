@@ -411,7 +411,7 @@ function renderFeed() {
         <div class="video-title">${escapeHtml(v.title)}</div>
         <div class="video-meta">
           <span>${escapeHtml(channel?.title || "")}</span>
-          <span>${timeAgo(v.published_at)}</span>
+          ${!v.is_short ? `<span>${timeAgo(v.published_at)}</span>` : ""}
         </div>
       </div>
     `;
