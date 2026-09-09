@@ -1,135 +1,111 @@
 # Channel Collections for YouTube
 
-A Manifest V3 extension that groups YouTube channels into private collections.
+A Firefox extension that groups YouTube channels into private collections.
 Auth and data live in your Supabase project. The YouTube API key stays on the
 server as an Edge Function secret — it is never shipped in the extension.
 
-## What you need from me later
+## Build Environment Requirements
 
-Paste these into `src/config.js` when you have them:
+### Operating System
+- Linux (tested on Ubuntu/Debian)
+- macOS
+- Windows 10/11
 
-- Supabase project URL (`https://YOUR_PROJECT_REF.supabase.co`)
-- Supabase **anon / publishable** key (safe for the extension)
+### Required Software
 
-Do **not** put the `service_role` key in the extension.
+| Program | Minimum Version | Installation |
+|---------|----------------|--------------|
+| Node.js | v22.22.2 or later | https://nodejs.org/ — download the LTS version |
+| npm | v10 or later | Included with Node.js |
+| Firefox | 142 or later | https://www.mozilla.org/firefox/ |
 
----
+**Note:** npm v12 is not compatible with this project. Use Node.js v22+ which includes npm v10+.
 
-## 1. Database schema
-
-Supabase Dashboard → **SQL Editor** → New query.
-
-Paste and run all of [`supabase/schema.sql`](supabase/schema.sql).
-
-That creates `channels`, `videos`, `collections`, `collection_channels`, indexes,
-and RLS. Authenticated users can only CRUD their own collections. `channels` and
-`videos` are readable by any signed-in user and writable only via the service
-role (Edge Functions).
-
----
-
-## 2. YouTube API key (server secret)
-
-1. Create a Google Cloud API key with **YouTube Data API v3** enabled.
-2. In Supabase: **Project Settings → Edge Functions → Secrets**
-   (or **Edge Functions → Manage secrets**).
-3. Add:
-
-   | Name | Value |
-   |------|--------|
-   | `YOUTUBE_API_KEY` | your YouTube Data API key |
-
-CLI equivalent:
-
+To check your versions:
 ```bash
-npx supabase secrets set YOUTUBE_API_KEY=AIza... --project-ref YOUR_PROJECT_REF
+node --version
+npm --version
 ```
 
-You do **not** need to re-deploy functions after setting a secret.
+If Node.js is not installed, download and install it from https://nodejs.org/.
+After installation, restart your terminal.
 
----
+## Step-by-Step Build Instructions
 
-## 3. Google sign-in
-
-1. Supabase Dashboard → **Authentication → Providers → Google** → enable it.
-   Use a Google OAuth Client ID/secret (Web application type).
-2. In that Google Cloud OAuth client, add authorized redirect URI:
-
-   `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
-
-3. Supabase → **Authentication → URL Configuration**:
-   - **Site URL**: `https://YOUR_PROJECT_REF.supabase.co`
-   - **Redirect URLs** — add the extension identity URL:
-     - Chrome: `https://<extension-id>.chromiumapp.org/`
-     - Firefox: copy it from the extension **Settings** panel after loading
-       (field “OAuth redirect URL”), or from
-       `browser.identity.getRedirectURL()`.
-
-Temporary Firefox add-ons get a new redirect URL if you reload from disk;
-add that URL again if Google sign-in fails after a reload.
-
----
-
-## 4. Deploy Edge Functions
-
-From this repo (after `npx supabase login` and linking the project):
-
-```bash
-npx supabase functions deploy resolve-channel --project-ref YOUR_PROJECT_REF
-npx supabase functions deploy refresh-channels --project-ref YOUR_PROJECT_REF
-```
-
-- `resolve-channel` — looks up a handle/URL/ID, upserts `channels`, fetches videos.
-- `refresh-channels` — refreshes videos for given channel IDs, or every channel
-  that appears in any collection when called with `{ "all": true }` and the
-  service role (cron).
-
----
-
-## 5. Periodic refresh (every 45 minutes)
-
-After the functions are deployed, SQL Editor → paste [`supabase/cron.sql`](supabase/cron.sql).
-
-Replace:
-
-- `YOUR_PROJECT_REF`
-- `YOUR_SERVICE_ROLE_KEY` (Project Settings → API → `service_role`)
-
-That stores those values in Vault and schedules `pg_cron` + `pg_net` to POST
-`/functions/v1/refresh-channels`.
-
-To unschedule later:
-
-```sql
-select cron.unschedule('refresh-youtube-channels');
-```
-
----
-
-## 6. Build and load the extension
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-Edit `src/config.js`:
+This installs `esbuild` (for bundling) and `web-ext` (for Firefox extension testing).
+
+### 2. Configure the extension
+
+Edit `src/config.js` (create if it does not exist):
 
 ```js
 export const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
 export const SUPABASE_ANON_KEY = "eyJ...";
 ```
 
+### 3. Build the extension
+
 ```bash
 npm run build
 ```
 
-Load the **folder** (not `dist/`) in Firefox `about:debugging` → This Firefox →
-Load Temporary Add-on → `manifest.json`, or Chrome `chrome://extensions` →
-Load unpacked.
+This runs `build.mjs` which uses esbuild to bundle `src/dashboard.js` and `src/background.js` into `dist/dashboard.js` and `dist/background.js`.
 
-Click the toolbar icon, sign in with Google, create a collection, add a channel.
+### 4. Load the extension in Firefox
 
----
+Option A — Load from source folder:
+```bash
+npm run firefox
+```
+
+Option B — Manual load:
+1. Open Firefox and navigate to `about:debugging`
+2. Click **This Firefox** (or **This Nightly**)
+3. Click **Load Temporary Add-on**
+4. Select `manifest.json` from the project root directory
+
+### 5. Package the extension (optional)
+
+To create an installable `.xpi` file:
+```bash
+npx web-ext build --source-dir . --artifacts-dir .
+```
+
+This produces `channel_collections_for_youtube-2.0.0.zip` in the project directory.
+
+## Project Structure
+
+```
+src/                  Extension source files (not minified)
+  dashboard.js        Main UI logic
+  background.js       Background service worker
+dist/                 Built output (bundled and minified by esbuild)
+  dashboard.js
+  background.js
+manifest.json         Firefox extension manifest
+build.mjs             Build script using esbuild
+package.json          npm configuration with build scripts
+package-lock.json     Locked dependency versions
+supabase/             Database schema, Edge Functions, cron jobs
+  schema.sql
+  cron.sql
+  functions/
+```
+
+## Build Tools Used
+
+This extension uses the following build tools:
+
+- **esbuild** (`^0.25.9`): Bundles and minifies JavaScript source files into `dist/`
+- **web-ext** (`^8.0.0`): Firefox extension CLI tool for testing and packaging
+
+Build script: `build.mjs` — executed via `npm run build`
 
 ## How data is split
 
@@ -148,13 +124,3 @@ happen inside Edge Functions using `YOUTUBE_API_KEY`.
 - **A collection** — same Videos/Shorts tabs and add-channel flow as before.
 - **Channels** (sidebar) — every distinct channel you follow; click one for
   that channel's last 12 months, still split Videos/Shorts.
-
-## Files
-
-```
-src/                  Extension source (bundled with esbuild)
-dist/                 Built dashboard.js + background.js
-supabase/schema.sql   Tables + RLS
-supabase/cron.sql     pg_cron schedule
-supabase/functions/   resolve-channel, refresh-channels
-```

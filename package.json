@@ -6,6 +6,7 @@
     "firefox": "web-ext run --source-dir . --keep-profile-changes"
   },
   "devDependencies": {
-    "esbuild": "^0.25.9"
+    "esbuild": "^0.25.9",
+    "web-ext": "^8.0.0"
   }
 }

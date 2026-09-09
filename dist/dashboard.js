@@ -26,11 +26,6 @@
       });
     });
   }
-  function escapeHtml(s) {
-    const d = document.createElement("div");
-    d.textContent = s || "";
-    return d.innerHTML;
-  }
   function timeAgo(iso) {
     const diffMs = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diffMs / 6e4);
@@ -329,23 +324,42 @@
     const homeBtn = el("homeNavBtn");
     homeBtn.classList.toggle("active", state.view === "home");
     const list = el("collectionList");
-    list.innerHTML = "";
+    list.textContent = "";
     for (const col of state.collections) {
       const item = document.createElement("div");
       item.className = "collection-item" + (state.view === "collection" && col.id === state.activeCollectionId ? " active" : "") + (col.expanded === false ? " collapsed" : "");
       item.dataset.id = col.id;
       item.draggable = true;
-      item.innerHTML = `
-      <div class="collection-item-main">
-        <span class="collection-name" data-id="${col.id}">${escapeHtml(col.name)}</span>
-        <div class="collection-toggle ${col.expanded === false ? "collapsed" : "expanded"}" title="Toggle collection"></div>
-        <div class="collection-actions">
-          <button class="rename-btn" data-id="${col.id}" title="Rename">\u270E</button>
-          <button class="delete-btn" data-id="${col.id}" title="Delete">\xD7</button>
-        </div>
-      </div>
-      <div class="collection-channels"></div>
-    `;
+      const itemMain = document.createElement("div");
+      itemMain.className = "collection-item-main";
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "collection-name";
+      nameSpan.dataset.id = col.id;
+      nameSpan.textContent = col.name;
+      const toggle = document.createElement("div");
+      toggle.className = `collection-toggle ${col.expanded === false ? "collapsed" : "expanded"}`;
+      toggle.title = "Toggle collection";
+      const actions = document.createElement("div");
+      actions.className = "collection-actions";
+      const renameBtn = document.createElement("button");
+      renameBtn.className = "rename-btn";
+      renameBtn.dataset.id = col.id;
+      renameBtn.title = "Rename";
+      renameBtn.textContent = "\u270E";
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.dataset.id = col.id;
+      deleteBtn.title = "Delete";
+      deleteBtn.textContent = "\xD7";
+      actions.appendChild(renameBtn);
+      actions.appendChild(deleteBtn);
+      itemMain.appendChild(nameSpan);
+      itemMain.appendChild(toggle);
+      itemMain.appendChild(actions);
+      item.appendChild(itemMain);
+      const channelsDiv = document.createElement("div");
+      channelsDiv.className = "collection-channels";
+      item.appendChild(channelsDiv);
       list.appendChild(item);
       const channelList = item.querySelector(".collection-channels");
       for (const channelId of col.channelIds) {
@@ -354,14 +368,29 @@
         const chItem = document.createElement("div");
         chItem.className = "collection-channel-item" + (state.view === "channel" && ch.id === state.activeChannelId ? " active" : "");
         chItem.draggable = true;
-        chItem.innerHTML = `
-        <img src="${escapeHtml(ch.thumbnail || "")}" alt="" />
-        <span class="channel-name">${escapeHtml(ch.title)}</span>
-        <div class="channel-actions">
-          <button class="rename-btn" data-id="${ch.id}" title="Rename">\u270E</button>
-          <button class="remove-channel-btn" data-id="${ch.id}" title="Remove">\xD7</button>
-        </div>
-      `;
+        const chImg = document.createElement("img");
+        chImg.src = ch.thumbnail || "";
+        chImg.alt = "";
+        const chName = document.createElement("span");
+        chName.className = "channel-name";
+        chName.textContent = ch.title;
+        const chActions = document.createElement("div");
+        chActions.className = "channel-actions";
+        const chRenameBtn = document.createElement("button");
+        chRenameBtn.className = "rename-btn";
+        chRenameBtn.dataset.id = ch.id;
+        chRenameBtn.title = "Rename";
+        chRenameBtn.textContent = "\u270E";
+        const chRemoveBtn = document.createElement("button");
+        chRemoveBtn.className = "remove-channel-btn";
+        chRemoveBtn.dataset.id = ch.id;
+        chRemoveBtn.title = "Remove";
+        chRemoveBtn.textContent = "\xD7";
+        chActions.appendChild(chRenameBtn);
+        chActions.appendChild(chRemoveBtn);
+        chItem.appendChild(chImg);
+        chItem.appendChild(chName);
+        chItem.appendChild(chActions);
         channelList.appendChild(chItem);
         const nameEl = chItem.querySelector(".channel-name");
         const openVideo = () => {
@@ -488,7 +517,7 @@
   function renderFeed() {
     const feed = el("feed");
     const empty = el("emptyState");
-    feed.innerHTML = "";
+    feed.textContent = "";
     feed.className = state.activeTab === "shorts" ? "feed short-feed" : "feed";
     if (state.view === "collection" && !activeCollection()) {
       empty.hidden = false;
@@ -528,25 +557,51 @@
       console.log("renderFeed video:", v.id, "watched:", isWatched);
       const card = document.createElement("div");
       card.className = "video-card" + (v.is_short ? " short" : "") + (isWatched ? " watched" : "");
-      card.innerHTML = `
-      <div class="video-thumb-wrap">
-        <img class="video-thumb" src="${escapeHtml(v.thumbnail || "")}" alt="" loading="lazy" />
-        <button type="button" class="watch-btn${isWatched ? " watched" : ""}" data-id="${escapeHtml(v.id)}" title="${isWatched ? "Mark as unwatched" : "Mark as watched"}">${isWatched ? "\u2713" : ""}</button>
-      </div>
-      <div class="video-info">
-        ${state.view === "home" && labels.length ? `<div class="video-collection-label">${escapeHtml(labels.join(" \xB7 "))}</div>` : ""}
-        <div class="video-title">${escapeHtml(v.title)}</div>
-        <div class="video-meta">
-          <span>${escapeHtml(channel?.title || "")}</span>
-          ${!v.is_short ? `<span>${timeAgo(v.published_at)}</span>` : ""}
-        </div>
-      </div>
-    `;
+      const thumbWrap = document.createElement("div");
+      thumbWrap.className = "video-thumb-wrap";
+      const thumb = document.createElement("img");
+      thumb.className = "video-thumb";
+      thumb.src = v.thumbnail || "";
+      thumb.alt = "";
+      thumb.loading = "lazy";
+      const watchBtn = document.createElement("button");
+      watchBtn.type = "button";
+      watchBtn.className = "watch-btn" + (isWatched ? " watched" : "");
+      watchBtn.dataset.id = v.id;
+      watchBtn.title = isWatched ? "Mark as unwatched" : "Mark as watched";
+      watchBtn.textContent = isWatched ? "\u2713" : "";
+      thumbWrap.appendChild(thumb);
+      thumbWrap.appendChild(watchBtn);
+      const videoInfo = document.createElement("div");
+      videoInfo.className = "video-info";
+      if (state.view === "home" && labels.length) {
+        const labelDiv = document.createElement("div");
+        labelDiv.className = "video-collection-label";
+        labelDiv.textContent = labels.join(" \xB7 ");
+        videoInfo.appendChild(labelDiv);
+      }
+      const titleDiv = document.createElement("div");
+      titleDiv.className = "video-title";
+      titleDiv.textContent = v.title;
+      videoInfo.appendChild(titleDiv);
+      const meta = document.createElement("div");
+      meta.className = "video-meta";
+      const channelSpan = document.createElement("span");
+      channelSpan.textContent = channel?.title || "";
+      meta.appendChild(channelSpan);
+      if (!v.is_short) {
+        const timeSpan = document.createElement("span");
+        timeSpan.textContent = timeAgo(v.published_at);
+        meta.appendChild(timeSpan);
+      }
+      videoInfo.appendChild(meta);
+      card.appendChild(thumbWrap);
+      card.appendChild(videoInfo);
       card.addEventListener("click", () => {
         window.open(v.url, "_blank", "noopener");
       });
-      const watchBtn = card.querySelector(".watch-btn");
-      watchBtn.addEventListener("click", (e) => {
+      const watchBtnEl = card.querySelector(".watch-btn");
+      watchBtnEl.addEventListener("click", (e) => {
         e.stopPropagation();
         toggleWatched(v.id);
       });
@@ -635,18 +690,27 @@
   function renderChannelManageList() {
     const col = activeCollection();
     const list = el("channelManageList");
-    list.innerHTML = "";
+    list.textContent = "";
     if (!col) return;
     for (const channelId of col.channelIds) {
       const ch = state.channelsById[channelId];
       if (!ch) continue;
       const li = document.createElement("li");
       li.className = "channel-manage-item";
-      li.innerHTML = `
-      <img src="${escapeHtml(ch.thumbnail || "")}" alt="" />
-      <span class="title">${escapeHtml(ch.title)}</span>
-      <button type="button" class="remove-channel-btn" data-id="${ch.id}">Remove</button>
-    `;
+      const chImg = document.createElement("img");
+      chImg.src = ch.thumbnail || "";
+      chImg.alt = "";
+      const chTitle = document.createElement("span");
+      chTitle.className = "title";
+      chTitle.textContent = ch.title;
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "remove-channel-btn";
+      removeBtn.dataset.id = ch.id;
+      removeBtn.textContent = "Remove";
+      li.appendChild(chImg);
+      li.appendChild(chTitle);
+      li.appendChild(removeBtn);
       list.appendChild(li);
     }
     list.querySelectorAll(".remove-channel-btn").forEach((btn) => {
