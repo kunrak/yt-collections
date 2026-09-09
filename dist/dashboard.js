@@ -33,7 +33,7 @@
     const hrs = Math.floor(mins / 60);
     if (hrs < 24) return `${hrs}h ago`;
     const days = Math.floor(hrs / 24);
-    if (days < 30) return `${days}d ago`;
+    if (days < 30) return ` ${days}d ago`;
     const months = Math.floor(days / 30);
     return `${months}mo ago`;
   }
@@ -230,6 +230,114 @@
       chrome.storage.local.set(obj, resolve);
     });
   }
+  function setBackupStatus(message, color) {
+    const status = el("backupStatus");
+    if (!status) return;
+    status.textContent = message;
+    status.style.color = color || "";
+    status.style.display = "block";
+  }
+  function createBackupId() {
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
+  function downloadBackup() {
+    const backup = {
+      version: 1,
+      exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      collections: state.collections,
+      channels: state.channelsById
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `channel-collections-backup-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+  async function readBackupFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("Could not read backup file."));
+      reader.readAsText(file);
+    });
+  }
+  function normalizeImportedChannels(channels) {
+    const normalized = {};
+    for (const [id, channel] of Object.entries(channels || {})) {
+      if (!id || !channel || typeof channel.title !== "string") continue;
+      const title = channel.title.trim();
+      if (!title) continue;
+      normalized[id] = {
+        id,
+        title,
+        thumbnail: typeof channel.thumbnail === "string" ? channel.thumbnail : ""
+      };
+    }
+    return normalized;
+  }
+  function normalizeImportedCollections(collections) {
+    if (!Array.isArray(collections)) return [];
+    return collections.filter(
+      (collection) => collection && typeof collection.name === "string" && collection.name.trim() && Array.isArray(collection.channelIds)
+    ).map((collection) => ({
+      id: typeof collection.id === "string" && collection.id ? collection.id : createBackupId(),
+      name: collection.name.trim(),
+      channelIds: collection.channelIds.filter(
+        (id) => typeof id === "string" && id
+      ),
+      ...typeof collection.expanded === "boolean" ? { expanded: collection.expanded } : {}
+    }));
+  }
+  async function importBackupData(data) {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      throw new Error("This file is not a valid backup.");
+    }
+    const importedChannels = normalizeImportedChannels(data.channels);
+    const importedCollections = normalizeImportedCollections(data.collections);
+    if (Object.keys(importedChannels).length === 0 && importedCollections.length === 0) {
+      throw new Error("No collections or channels found in this file.");
+    }
+    const existingChannelIds = new Set(Object.keys(state.channelsById));
+    for (const [id, channel] of Object.entries(importedChannels)) {
+      const existing = state.channelsById[id];
+      state.channelsById[id] = {
+        id,
+        title: existing?.title || channel.title,
+        thumbnail: existing?.thumbnail || channel.thumbnail
+      };
+      existingChannelIds.add(id);
+    }
+    const existingCollectionIds = new Set(state.collections.map((col) => col.id));
+    const importedCollectionIds = /* @__PURE__ */ new Set();
+    for (const collection of importedCollections) {
+      const id = existingCollectionIds.has(collection.id) ? createBackupId() : collection.id;
+      importedCollectionIds.add(id);
+      state.collections.push({
+        id,
+        name: collection.name,
+        channelIds: [
+          ...new Set(
+            collection.channelIds.filter((channelId) => existingChannelIds.has(channelId))
+          )
+        ],
+        ...typeof collection.expanded === "boolean" ? { expanded: collection.expanded } : {}
+      });
+    }
+    await saveChannels();
+    await saveCollections();
+    await loadCollections();
+    await renderAll();
+    return {
+      channels: Object.keys(importedChannels).length,
+      collections: importedCollectionIds.size
+    };
+  }
   async function saveCollections() {
     try {
       await new Promise((resolve) => {
@@ -318,7 +426,6 @@
     if (el("manageChannelsBtn")) el("manageChannelsBtn").hidden = false;
     if (el("signOutBtn")) el("signOutBtn").style.display = "none";
     if (el("authError")) el("authError").style.display = "none";
-    if (el("settingsBtn")) el("settingsBtn").style.display = "none";
   }
   function renderSidebar() {
     const homeBtn = el("homeNavBtn");
@@ -687,6 +794,7 @@
     el("addChannelHint").textContent = "";
     openModal("channelsModal");
   });
+  el("settingsBtn").addEventListener("click", () => openModal("settingsModal"));
   function renderChannelManageList() {
     const col = activeCollection();
     const list = el("channelManageList");
@@ -768,6 +876,35 @@
       }
     );
     await renderAll();
+  });
+  el("exportBackupBtn").addEventListener("click", () => {
+    try {
+      downloadBackup();
+      setBackupStatus("Backup exported. Download started.", "");
+    } catch (err) {
+      setBackupStatus(err.message, "var(--danger)");
+    }
+  });
+  el("importBackupBtn").addEventListener("click", () => {
+    el("importBackupInput").click();
+  });
+  el("importBackupInput").addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBackupStatus("Importing backup...", "");
+    try {
+      const content = await readBackupFile(file);
+      const data = JSON.parse(content);
+      const result = await importBackupData(data);
+      setBackupStatus(
+        `Imported ${result.channels} channel${result.channels === 1 ? "" : "s"} and ${result.collections} collection${result.collections === 1 ? "" : "s"}.`,
+        ""
+      );
+      e.target.value = "";
+    } catch (err) {
+      setBackupStatus(err.message, "var(--danger)");
+      e.target.value = "";
+    }
   });
   el("refreshBtn").addEventListener("click", async () => {
     const btn = el("refreshBtn");

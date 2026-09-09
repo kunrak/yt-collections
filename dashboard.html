@@ -54,6 +54,10 @@
         </div>
 
         <button type="button" class="settings-btn" id="settingsBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
           Settings
         </button>
       </aside>
@@ -163,6 +167,24 @@
           Add this URL under Supabase → Authentication → URL Configuration →
           Redirect URLs.
         </p>
+
+        <div class="backup-zone">
+          <h3>Backup &amp; Restore</h3>
+          <p class="form-hint">
+            Export your collections and channels to a file. You can import it
+            later on this or another browser.
+          </p>
+          <div class="backup-actions">
+            <button type="button" class="primary-btn" id="exportBackupBtn">
+              Export
+            </button>
+            <button type="button" class="icon-btn" id="importBackupBtn">
+              Import
+            </button>
+            <input type="file" id="importBackupInput" accept=".json,application/json" hidden />
+          </div>
+          <p class="form-hint" id="backupStatus"></p>
+        </div>
 
         <div class="danger-zone">
           <h3>Delete this collection</h3>
