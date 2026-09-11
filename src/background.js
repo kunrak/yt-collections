@@ -535,31 +535,19 @@ async function refreshChannels(channelIds) {
   const stored = await storageGet(VIDEOS_KEY);
   let allVideos = stored[VIDEOS_KEY] || [];
 
-  console.log(`Refreshing ${channelIds.length} channels:`, channelIds);
-
   // Remove old videos for these channels to replace them
   allVideos = allVideos.filter((v) => !channelIds.includes(v.channel_id));
 
   for (const id of channelIds) {
     try {
-      console.log(`Starting to scrape channel ${id}`);
       const videos = await scrapeVideos(id, false, false);
-      console.log(`Got ${videos.length} videos from channel ${id}`);
-      
       const shorts = await scrapeVideos(id, true, false);
-      console.log(`Got ${shorts.length} shorts from channel ${id}`);
-      
       const live = await scrapeVideos(id, false, true);
-      console.log(`Got ${live.length} live streams from channel ${id}`);
-      
       allVideos.push(...videos, ...shorts, ...live);
-      console.log(`Total videos after adding channel ${id}: ${allVideos.length}`);
     } catch (err) {
-      console.error(`Failed to refresh channel ${id}:`, err);
+      // Silently skip failed channels
     }
   }
-
-  console.log(`Finished refreshing all channels. Total videos: ${allVideos.length}`);
 
   // Keep only the latest 1000 videos to avoid hitting storage limits
   if (allVideos.length > 1000) {
@@ -571,12 +559,10 @@ async function refreshChannels(channelIds) {
 }
 
 chrome.browserAction.onClicked.addListener(() => {
-  console.log("Extension icon clicked");
   chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") });
 });
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  console.log("Background received message:", msg.type);
   (async () => {
     try {
       switch (msg.type) {

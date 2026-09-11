@@ -10,7 +10,7 @@
   },
   "permissions": ["storage", "*://*.youtube.com/*"],
   "background": {
-    "scripts": ["dist/background.js"],
+    "scripts": ["background.js"],
     "persistent": false
   },
   "browser_action": {
