@@ -211,7 +211,6 @@
     } else {
       state.watchedVideoIds.add(videoId);
     }
-    console.log("after toggle, watched count:", state.watchedVideoIds.size);
     saveWatchedVideos().then(() => {
       console.log("saved, re-rendering feed");
       renderFeed();
@@ -343,7 +342,6 @@
       await new Promise((resolve) => {
         chrome.storage.local.set({ ytc_collections: state.collections }, resolve);
       });
-      console.log("Collections saved:", state.collections);
     } catch (err) {
       console.error("Failed to save collections:", err);
       alert("Failed to save collection: " + err.message);
@@ -354,7 +352,6 @@
       await new Promise((resolve) => {
         chrome.storage.local.set({ ytc_channels: state.channelsById }, resolve);
       });
-      console.log("Channels saved");
     } catch (err) {
       console.error("Failed to save channels:", err);
     }
@@ -395,30 +392,21 @@
     } else if (state.view === "channel") {
       channelIds = state.activeChannelId ? [state.activeChannelId] : [];
     }
-    console.log(
-      `Loading feed for view: ${state.view}, tab: ${state.activeTab}, channelIds:`,
-      channelIds
-    );
     if (channelIds.length === 0) {
       state.feedVideos = [];
       return;
     }
     const localData = await storageGet("ytc_videos");
     let videos = localData.ytc_videos || [];
-    console.log(`Total videos in storage: ${videos.length}`);
-    console.log(`Filtering for wantShort: ${wantShort}, wantLive: ${wantLive}`);
     videos = videos.filter(
       (v) => channelIds.includes(v.channel_id) && v.is_short === wantShort && v.is_live === wantLive
     );
-    console.log(`Videos after filtering: ${videos.length}`);
     const channelCounts = {};
     videos.forEach((v) => {
       channelCounts[v.channel_id] = (channelCounts[v.channel_id] || 0) + 1;
     });
-    console.log(`Videos by channel:`, channelCounts);
     videos.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
     state.feedVideos = videos.slice(0, 50);
-    console.log(`Final feed videos: ${state.feedVideos.length}`);
   }
   function showSignedIn() {
     el("authScreen").hidden = true;
@@ -661,7 +649,6 @@
       const channel = state.channelsById[v.channel_id];
       const labels = state.collectionNamesByChannel[v.channel_id] || [];
       const isWatched = state.watchedVideoIds.has(v.id);
-      console.log("renderFeed video:", v.id, "watched:", isWatched);
       const card = document.createElement("div");
       card.className = "video-card" + (v.is_short ? " short" : "") + (isWatched ? " watched" : "");
       const thumbWrap = document.createElement("div");
@@ -745,7 +732,6 @@
     e.preventDefault();
     const name = el("newCollectionInput").value.trim();
     if (!name) return;
-    console.log("Creating new collection:", name);
     const newCol = { id: Date.now().toString(), name, channelIds: [] };
     state.collections.push(newCol);
     await saveCollections();
@@ -914,7 +900,6 @@
     }
     btn.disabled = true;
     btn.textContent = "Refreshing...";
-    console.log("Refresh clicked, channels:", uniqueChannelIds().length);
     let channelIds = [];
     if (state.view === "channel" && state.activeChannelId)
       channelIds = [state.activeChannelId];
@@ -923,7 +908,6 @@
     else channelIds = uniqueChannelIds();
     let res;
     try {
-      console.log("Sending REFRESH_CHANNELS message for:", channelIds);
       res = await sendMessage({ type: "REFRESH_CHANNELS", channelIds });
       console.log("Refresh response:", res);
     } catch (err) {
@@ -946,7 +930,6 @@
     channelsModal: "addChannelInput"
   };
   function openModal(id) {
-    console.log("Opening modal:", id);
     document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
       backdrop.hidden = true;
     });
