@@ -1,75 +1,126 @@
 # Channel Collections for YouTube
 
-A Chrome extension that lets you follow only the channels you pick, grouped
-into your own topic collections — each with separate Videos and Shorts feeds.
-It does **not** modify youtube.com; it opens its own dashboard page instead.
+A Firefox extension that groups YouTube channels into private collections.
+Auth and data live in your Supabase project. The YouTube API key stays on the
+server as an Edge Function secret — it is never shipped in the extension.
 
-## 1. Get a free YouTube Data API key
+## Build Environment Requirements
 
-1. Go to https://console.cloud.google.com/ and create a project (or reuse one).
-2. Open **APIs & Services → Library**, search for **YouTube Data API v3**, and enable it.
-3. Open **APIs & Services → Credentials → Create Credentials → API key**.
-4. Copy the key. (Optional but recommended: click into the key and restrict it
-   to the YouTube Data API v3, so it can't be used for anything else.)
+### Operating System
+- Linux (tested on Ubuntu/Debian)
+- macOS
+- Windows 10/11
 
-This gives you 10,000 free quota units/day, which is far more than enough for
-personal use — fetching updates costs roughly 2 units per channel per refresh.
+### Required Software
 
-## 2. Load the extension in Chrome
+| Program | Minimum Version | Installation |
+|---------|----------------|--------------|
+| Node.js | v22.22.2 or later | https://nodejs.org/ — download the LTS version |
+| npm | v10 or later | Included with Node.js |
+| Firefox | 142 or later | https://www.mozilla.org/firefox/ |
 
-1. Unzip this folder somewhere permanent (don't delete it after loading).
-2. Go to `chrome://extensions`.
-3. Turn on **Developer mode** (top right).
-4. Click **Load unpacked** and select the `yt-collections` folder.
-5. Pin the extension from the puzzle-piece icon in your toolbar.
+**Note:** npm v12 is not compatible with this project. Use Node.js v22+ which includes npm v10+.
 
-## 3. Set up
+To check your versions:
+```bash
+node --version
+npm --version
+```
 
-1. Click the extension icon — it opens the dashboard in a new tab.
-2. It will prompt you for your API key. Paste it in Settings and save.
-3. Click **+ New collection**, name it (e.g. "Tech", "Cooking").
-4. Click **Channels → Add**, and paste a channel URL, `@handle`, or channel ID.
-5. Repeat for as many channels and collections as you want.
+If Node.js is not installed, download and install it from https://nodejs.org/.
+After installation, restart your terminal.
 
-## How it works
+## Step-by-Step Build Instructions
 
-- Each collection is just a named set of channels.
-- Every collection opens on a **Home** tab showing everything (videos and
-  Shorts) uploaded in the last 7 days, newest first. The **Videos** and
-  **Shorts** tabs show all cached uploads of each kind.
-- **All collections** in the sidebar shows the same three tabs across every
-  channel you follow.
-- The search box filters the current view by video title or channel name.
-  Searching on the Home tab ignores the 7-day window.
-- The extension fetches each channel's uploads playlist (not search — this
-  keeps API quota usage tiny) and classifies each video as a Short if it's
-  60 seconds or under.
-- A background alarm refreshes everything automatically every 45 minutes.
-  You can also hit **Refresh** in the dashboard any time.
-- All data (API key, collections, cached videos) is stored locally in your
-  browser via `chrome.storage.local` — nothing is sent anywhere except
-  directly to Google's YouTube API.
+### 1. Install dependencies
 
-## Notes / known limitations
+```bash
+npm install
+```
 
-- YouTube's API has no official "this is a Short" flag — this extension uses
-  the same duration-based heuristic (≤60s) that most third-party tools use.
-  It's accurate for the vast majority of Shorts but not 100% guaranteed.
-- If a collection's feed looks empty right after adding channels, hit
-  **Refresh** — the very first add already fetches videos, but a manual
-  refresh re-checks everything. If a refresh fails for any channel (bad key,
-  quota, network), the reason is shown under the header.
-- If you ever see an API error mentioning quota, you've hit the 10,000
-  units/day free cap (very unlikely for personal use) — it resets at
-  midnight Pacific time.
+This installs `esbuild` (for bundling) and `web-ext` (for Firefox extension testing).
 
-## Files
+### 2. Configure the extension
+
+Edit `src/config.js` (create if it does not exist):
+
+```js
+export const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+export const SUPABASE_ANON_KEY = "eyJ...";
+```
+
+### 3. Build the extension
+
+```bash
+npm run build
+```
+
+This runs `build.mjs` which uses esbuild to bundle `src/dashboard.js` and `src/background.js` into `dist/dashboard.js` and `dist/background.js`.
+
+### 4. Load the extension in Firefox
+
+Option A — Load from source folder:
+```bash
+npm run firefox
+```
+
+Option B — Manual load:
+1. Open Firefox and navigate to `about:debugging`
+2. Click **This Firefox** (or **This Nightly**)
+3. Click **Load Temporary Add-on**
+4. Select `manifest.json` from the project root directory
+
+### 5. Package the extension (optional)
+
+To create an installable `.xpi` file:
+```bash
+npx web-ext build --source-dir . --artifacts-dir .
+```
+
+This produces `channel_collections_for_youtube-2.0.0.zip` in the project directory.
+
+## Project Structure
 
 ```
-manifest.json     Extension configuration (Manifest V3)
-background.js     Service worker: API calls, polling, storage
-dashboard.html    Main UI markup
-dashboard.css     Styling
-dashboard.js      Dashboard logic and state
-icons/            Toolbar icons
+src/                  Extension source files (not minified)
+  dashboard.js        Main UI logic
+  background.js       Background service worker
+dist/                 Built output (bundled and minified by esbuild)
+  dashboard.js
+  background.js
+manifest.json         Firefox extension manifest
+build.mjs             Build script using esbuild
+package.json          npm configuration with build scripts
+package-lock.json     Locked dependency versions
+supabase/             Database schema, Edge Functions, cron jobs
+  schema.sql
+  cron.sql
+  functions/
 ```
+
+## Build Tools Used
+
+This extension uses the following build tools:
+
+- **esbuild** (`^0.25.9`): Bundles and minifies JavaScript source files into `dist/`
+- **web-ext** (`^8.0.0`): Firefox extension CLI tool for testing and packaging
+
+Build script: `build.mjs` — executed via `npm run build`
+
+## How data is split
+
+| Data | Scope |
+|------|--------|
+| `channels`, `videos` | Shared catalog for every user |
+| `collections`, `collection_channels` | Private per `auth.users` row (RLS) |
+
+The dashboard reads collections/videos with the user's JWT. YouTube calls only
+happen inside Edge Functions using `YOUTUBE_API_KEY`.
+
+## UI
+
+- **Home** — videos from all of your collections, newest first,
+  with a collection-name label on each card.
+- **A collection** — same Videos/Shorts tabs and add-channel flow as before.
+- **Channels** (sidebar) — every distinct channel you follow; click one for
+  that channel's last 12 months, still split Videos/Shorts.

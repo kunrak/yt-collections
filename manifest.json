@@ -1,20 +1,20 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "Channel Collections for YouTube",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Follow only the YouTube channels you pick, grouped into your own topic collections — with separate Videos and Shorts feeds.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "alarms"],
-  "host_permissions": ["https://www.googleapis.com/*"],
+  "permissions": ["storage", "*://*.youtube.com/*"],
   "background": {
     "service_worker": "background.js",
-    "scripts": ["background.js"]
+    "scripts": ["background.js"],
+    "persistent": false
   },
-  "action": {
+  "browser_action": {
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -25,7 +25,10 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "channel-collections@local.extension",
-      "strict_min_version": "109.0"
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   }
 }
