@@ -1,4 +1,31 @@
+# dependencies
 node_modules/
+
+# secrets and local env
 .env
 .env.local
-supabase/.temp/
+*.pem
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editor
+*.swp
+*~
+
+# Firefox packaging and build
+*.xpi
+web-ext-artifacts/
+firefox-extension/dist/
+firefox-extension/node_modules/
+
+# Chrome packaging
+*.crx
+
+# archives and maps
+*.zip
+*.map
+
+# leftover root build output
+dist/
