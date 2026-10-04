@@ -202,8 +202,7 @@ input {
 }
 
 .rename-btn,
-.delete-btn,
-.collection-toggle {
+.delete-btn {
   pointer-events: auto;
   z-index: 1;
 }
@@ -238,46 +237,28 @@ input {
   gap: 6px;
 }
 
-.collection-toggle {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 12px;
-  flex-shrink: 0;
-  opacity: 0;
-  transition:
-    opacity 0.15s,
-    background 0.15s;
-}
-
-.collection-item:hover .collection-toggle {
-  opacity: 1;
-}
-
-.collection-item:hover .collection-toggle:hover {
-  background: var(--border);
-  color: var(--text);
-}
-
-.collection-toggle.collapsed::after {
-  content: "▼";
-}
-
-.collection-toggle.expanded::after {
-  content: "▶";
-}
-
 .collection-name {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.collection-name::before {
+  content: "▼";
+  font-size: 9px;
+  line-height: 1;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.collection-item.collapsed .collection-name::before {
+  content: "▶";
 }
 
 .rename-btn,
@@ -319,10 +300,6 @@ input {
 
 .collection-item .count {
   display: none;
-}
-
-.collection-item.collapsed .collection-toggle.expanded {
-  opacity: 1;
 }
 
 .new-collection-btn,

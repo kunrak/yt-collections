@@ -52,9 +52,8 @@ function setupCollectionDragDrop() {
     const item = e.target.closest(".collection-item");
     if (!item || item.id === "homeNavBtn") return;
 
-    // Don't drag if clicking on buttons or the toggle
-    if (e.target.closest("button") || e.target.closest(".collection-toggle"))
-      return;
+    // Don't drag if clicking on buttons
+    if (e.target.closest("button")) return;
 
     dragSource = item;
     dragSourceIndex = Array.from(collectionList.children).indexOf(item);
@@ -576,10 +575,7 @@ function renderSidebar() {
     nameSpan.className = "collection-name";
     nameSpan.dataset.id = col.id;
     nameSpan.textContent = col.name;
-
-    const toggle = document.createElement("div");
-    toggle.className = `collection-toggle ${col.expanded === false ? "collapsed" : "expanded"}`;
-    toggle.title = "Toggle collection";
+    nameSpan.title = col.expanded === false ? "Show channels" : "Hide channels";
 
     const actions = document.createElement("div");
     actions.className = "collection-actions";
@@ -599,7 +595,6 @@ function renderSidebar() {
     actions.appendChild(renameBtn);
     actions.appendChild(deleteBtn);
     itemMain.appendChild(nameSpan);
-    itemMain.appendChild(toggle);
     itemMain.appendChild(actions);
     item.appendChild(itemMain);
 
@@ -703,21 +698,19 @@ function renderSidebar() {
       });
     }
 
-    item.querySelector(".collection-name").addEventListener("click", () => {
-      state.view = "collection";
-      state.activeCollectionId = col.id;
-      renderAll();
-    });
-
-    item.querySelector(".collection-toggle").addEventListener("click", (e) => {
-      col.expanded = col.expanded === false ? true : false;
-      saveCollections().then(() => {
-        // Update the toggle button class immediately for responsive UI
-        const toggleBtn = item.querySelector(".collection-toggle");
-        toggleBtn.className = `collection-toggle ${col.expanded === false ? "collapsed" : "expanded"}`;
-        renderAll();
-      });
+    item.querySelector(".collection-name").addEventListener("click", (e) => {
       e.stopPropagation();
+      const isActive =
+        state.view === "collection" && state.activeCollectionId === col.id;
+      const isCollapsed = col.expanded === false;
+      if (isActive) {
+        col.expanded = isCollapsed;
+      } else {
+        state.view = "collection";
+        state.activeCollectionId = col.id;
+        if (isCollapsed) col.expanded = true;
+      }
+      saveCollections().then(() => renderAll());
     });
 
     item.querySelector(".delete-btn").addEventListener("click", async (e) => {
