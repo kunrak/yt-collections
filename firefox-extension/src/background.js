@@ -15,6 +15,7 @@ function storageSet(obj) {
 
 async function fetchHtml(url) {
   const res = await fetch(url, {
+    credentials: "omit",
     headers: { "Accept-Language": "en-US,en;q=0.9" },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
@@ -168,29 +169,225 @@ function getChips(grid) {
     }));
 }
 
-function continuationItemsFromBrowse(data) {
-  const actions =
-    data?.onResponseReceivedActions ||
-    data?.onResponseReceivedEndpoints ||
-    [];
-  for (const action of actions) {
-    const reload = action.reloadContinuationItemsCommand?.continuationItems;
-    if (reload?.length) return reload;
-    const append = action.appendContinuationItemsAction?.continuationItems;
-    if (append?.length) return append;
-  }
+function tokenFromItems(items) {
   return (
-    data?.continuationContents?.richGridContinuation?.contents ||
-    []
+    items?.find((item) => item.continuationItemRenderer)?.continuationItemRenderer
+      ?.continuationEndpoint?.continuationCommand?.token || null
   );
 }
 
-async function fetchBrowseContinuation(token, ytcfg) {
-  if (!token || !ytcfg?.apiKey) return [];
+function tokenFromContinuations(continuations) {
+  if (!continuations?.length) return null;
+  const entry = continuations[0];
+  return (
+    entry.nextContinuationData?.continuation ||
+    entry.continuationCommand?.token ||
+    entry.reloadContinuationData?.continuation ||
+    null
+  );
+}
+
+function browseContinuationResult(data) {
+  const actions =
+    data?.onResponseReceivedActions || data?.onResponseReceivedEndpoints || [];
+  for (const action of actions) {
+    const reload = action.reloadContinuationItemsCommand;
+    if (reload?.continuationItems?.length) {
+      return {
+        items: reload.continuationItems,
+        token:
+          tokenFromItems(reload.continuationItems) ||
+          tokenFromContinuations(reload.continuations),
+      };
+    }
+    const append = action.appendContinuationItemsAction;
+    if (append?.continuationItems?.length) {
+      return {
+        items: append.continuationItems,
+        token:
+          tokenFromItems(append.continuationItems) ||
+          tokenFromContinuations(append.continuations),
+      };
+    }
+  }
+  const grid = data?.continuationContents?.richGridContinuation;
+  if (grid) {
+    const items = grid.contents || [];
+    return {
+      items,
+      token: tokenFromItems(items) || tokenFromContinuations(grid.continuations),
+    };
+  }
+  return { items: [], token: null };
+}
+
+function extensionApi() {
+  if (globalThis.browser?.scripting && globalThis.browser?.windows) {
+    return globalThis.browser;
+  }
+  return globalThis.chrome;
+}
+
+const YOUTUBE_ORIGIN_RULE_ID = 1;
+let originRuleReady = null;
+let continuationViaPage = false;
+let browseWindowPromise = null;
+
+function ensureYouTubeOriginRule() {
+  if (originRuleReady) return originRuleReady;
+  const dnr = chrome.declarativeNetRequest;
+  if (!dnr?.updateDynamicRules || !chrome.runtime?.id) {
+    originRuleReady = Promise.resolve();
+    return originRuleReady;
+  }
+  originRuleReady = dnr
+    .updateDynamicRules({
+      removeRuleIds: [YOUTUBE_ORIGIN_RULE_ID],
+      addRules: [
+        {
+          id: YOUTUBE_ORIGIN_RULE_ID,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              {
+                header: "origin",
+                operation: "set",
+                value: "https://www.youtube.com",
+              },
+              {
+                header: "referer",
+                operation: "set",
+                value: "https://www.youtube.com/",
+              },
+            ],
+          },
+          condition: {
+            initiatorDomains: [chrome.runtime.id],
+            requestDomains: ["www.youtube.com"],
+            resourceTypes: ["xmlhttprequest"],
+          },
+        },
+      ],
+    })
+    .catch((err) => {
+      console.error("Could not set YouTube request headers:", err);
+    });
+  return originRuleReady;
+}
+
+function continuationBody(token, ytcfg) {
+  return {
+    context: {
+      client: {
+        clientName: "WEB",
+        clientVersion: ytcfg?.clientVersion || "2.20250901.00.00",
+        hl: "en",
+        gl: "US",
+      },
+    },
+    continuation: token,
+  };
+}
+
+async function fetchBrowseContinuationDirect(token, ytcfg) {
+  await ensureYouTubeOriginRule();
+  const keyParam = ytcfg?.apiKey ? `key=${encodeURIComponent(ytcfg.apiKey)}&` : "";
   const res = await fetch(
-    `https://www.youtube.com/youtubei/v1/browse?key=${ytcfg.apiKey}&prettyPrint=false`,
+    `https://www.youtube.com/youtubei/v1/browse?${keyParam}prettyPrint=false`,
     {
       method: "POST",
+      credentials: "omit",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      body: JSON.stringify(continuationBody(token, ytcfg)),
+    },
+  );
+  if (!res.ok) throw new Error(`HTTP ${res.status} browsing continuation`);
+  return browseContinuationResult(await res.json());
+}
+
+function waitForTabComplete(tabId) {
+  const api = extensionApi();
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timeout);
+      api.tabs.onUpdated.removeListener(onUpdated);
+      resolve();
+    };
+    const timeout = setTimeout(() => {
+      if (done) return;
+      done = true;
+      api.tabs.onUpdated.removeListener(onUpdated);
+      reject(new Error("Timed out opening YouTube"));
+    }, 20000);
+    function onUpdated(id, info) {
+      if (id === tabId && info.status === "complete") finish();
+    }
+    api.tabs.onUpdated.addListener(onUpdated);
+    Promise.resolve(api.tabs.get(tabId))
+      .then((tab) => {
+        if (tab?.status === "complete") finish();
+      })
+      .catch(() => {});
+  });
+}
+
+async function createBrowseWindow() {
+  const api = extensionApi();
+  const options = {
+    url: "https://www.youtube.com/404",
+    type: "popup",
+    focused: false,
+    width: 400,
+    height: 300,
+  };
+  let win;
+  try {
+    win = await api.windows.create({ ...options, state: "minimized" });
+  } catch (err) {
+    win = await api.windows.create(options);
+  }
+  const tabId = win?.tabs?.[0]?.id;
+  if (!win?.id || !tabId) throw new Error("Could not open YouTube fetch window");
+  await waitForTabComplete(tabId);
+  return { windowId: win.id, tabId };
+}
+
+function browseWindow() {
+  if (!browseWindowPromise) {
+    browseWindowPromise = createBrowseWindow().catch((err) => {
+      browseWindowPromise = null;
+      throw err;
+    });
+  }
+  return browseWindowPromise;
+}
+
+async function closeBrowseWindow() {
+  const pending = browseWindowPromise;
+  browseWindowPromise = null;
+  if (!pending) return;
+  try {
+    const { windowId } = await pending;
+    await extensionApi().windows.remove(windowId);
+  } catch (err) {
+    // The window may already be closed.
+  }
+}
+
+async function browseInYouTubePage(payload) {
+  const keyParam = payload.apiKey ? `key=${encodeURIComponent(payload.apiKey)}&` : "";
+  const res = await fetch(
+    `https://www.youtube.com/youtubei/v1/browse?${keyParam}prettyPrint=false`,
+    {
+      method: "POST",
+      credentials: "omit",
       headers: {
         "Content-Type": "application/json",
         "Accept-Language": "en-US,en;q=0.9",
@@ -199,18 +396,102 @@ async function fetchBrowseContinuation(token, ytcfg) {
         context: {
           client: {
             clientName: "WEB",
-            clientVersion: ytcfg.clientVersion || "2.20250901.00.00",
+            clientVersion: payload.clientVersion,
             hl: "en",
             gl: "US",
           },
         },
-        continuation: token,
+        continuation: payload.token,
       }),
     },
   );
-  if (!res.ok) throw new Error(`HTTP ${res.status} browsing continuation`);
-  const data = await res.json();
-  return continuationItemsFromBrowse(data);
+  if (!res.ok) return { errorStatus: res.status };
+  return { data: await res.json() };
+}
+
+async function fetchBrowseContinuationInPage(token, ytcfg) {
+  const api = extensionApi();
+  if (!api.scripting?.executeScript) {
+    throw new Error("Cannot load more YouTube videos in this browser");
+  }
+  const payload = {
+    token,
+    apiKey: ytcfg?.apiKey || "",
+    clientVersion: ytcfg?.clientVersion || "2.20250901.00.00",
+  };
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { tabId } = await browseWindow();
+    try {
+      const results = await api.scripting.executeScript({
+        target: { tabId },
+        world: "MAIN",
+        func: browseInYouTubePage,
+        args: [payload],
+      });
+      const result = results?.[0]?.result;
+      if (!result) throw new Error("Empty continuation result");
+      if (result.errorStatus) {
+        throw new Error(`HTTP ${result.errorStatus} browsing continuation`);
+      }
+      return browseContinuationResult(result.data);
+    } catch (err) {
+      lastError = err;
+      await closeBrowseWindow();
+    }
+  }
+  throw lastError || new Error("Could not load the next YouTube page");
+}
+
+async function fetchBrowseContinuation(token, ytcfg) {
+  if (!token) return { items: [], token: null };
+  if (!continuationViaPage) {
+    try {
+      return await fetchBrowseContinuationDirect(token, ytcfg);
+    } catch (err) {
+      if (!String(err?.message || err).includes("403")) throw err;
+      continuationViaPage = true;
+    }
+  }
+  return fetchBrowseContinuationInPage(token, ytcfg);
+}
+
+const RECENT_WINDOW_DAYS = 7;
+const MIN_VIDEOS_PER_CHANNEL = 50;
+const MAX_SCRAPE_PAGES = 40;
+
+function videoPublishedMs(video) {
+  if (!video?.published_at) return null;
+  const t = new Date(video.published_at).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+function hasVideoOlderThanDays(videos, days) {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  return videos.some((video) => {
+    const t = videoPublishedMs(video);
+    return t !== null && t < cutoff;
+  });
+}
+
+function needsAnotherPage(videos) {
+  const dated = videos.filter((video) => videoPublishedMs(video) !== null);
+  if (dated.length === 0) return videos.length < MIN_VIDEOS_PER_CHANNEL;
+  if (!hasVideoOlderThanDays(videos, RECENT_WINDOW_DAYS)) return true;
+  return videos.length < MIN_VIDEOS_PER_CHANNEL;
+}
+
+function takeChannelVideos(videos) {
+  const cutoff = Date.now() - RECENT_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const sorted = [...videos].sort(
+    (a, b) => (videoPublishedMs(b) || 0) - (videoPublishedMs(a) || 0),
+  );
+  const withinWindow = sorted.filter((video) => {
+    const t = videoPublishedMs(video);
+    return t !== null && t >= cutoff;
+  });
+  if (withinWindow.length >= MIN_VIDEOS_PER_CHANNEL) return withinWindow;
+  return sorted.slice(0, MIN_VIDEOS_PER_CHANNEL);
 }
 
 function parsePublishedTime(timeText) {
@@ -389,6 +670,8 @@ async function scrapeVideos(channelId, isShorts, isLive) {
 
     let grid = getGrid(currentTab);
     let items = grid?.contents || [];
+    let continuationToken =
+      tokenFromItems(items) || tokenFromContinuations(grid?.continuations);
 
     if (!isShorts && !isLive && grid) {
       const chips = getChips(grid);
@@ -396,8 +679,11 @@ async function scrapeVideos(channelId, isShorts, isLive) {
       const latest = chips.find((c) => c.text === "latest");
       if (popular?.selected && latest?.token) {
         try {
-          const latestItems = await fetchBrowseContinuation(latest.token, ytcfg);
-          if (latestItems.length) items = latestItems;
+          const latestPage = await fetchBrowseContinuation(latest.token, ytcfg);
+          if (latestPage.items.length) {
+            items = latestPage.items;
+            continuationToken = latestPage.token;
+          }
         } catch (err) {
           console.error("Failed to load Latest chip, using current tab:", err);
         }
@@ -405,36 +691,36 @@ async function scrapeVideos(channelId, isShorts, isLive) {
     }
 
     const videos = processGridItems(items, channelId, isShorts, isLive);
+    const seen = new Set(videos.map((video) => video.id));
+    let pageCount = 0;
 
-    if (isShorts) {
-      const maxPages = 5;
-      let pageCount = 0;
-      let continuationToken =
-        grid?.continuations?.[0]?.nextContinuationData?.continuation ||
-        items.find((item) => item.continuationItemRenderer)
-          ?.continuationItemRenderer?.continuationEndpoint?.continuationCommand
-          ?.token ||
-        null;
-
-      while (continuationToken && pageCount < maxPages) {
-        pageCount += 1;
-        try {
-          const continuationItems = await fetchBrowseContinuation(
-            continuationToken,
-            ytcfg,
-          );
-          if (!continuationItems.length) break;
-          videos.push(
-            ...processGridItems(continuationItems, channelId, isShorts, isLive),
-          );
-          continuationToken =
-            continuationItems.find((item) => item.continuationItemRenderer)
-              ?.continuationItemRenderer?.continuationEndpoint
-              ?.continuationCommand?.token || null;
-        } catch (err) {
-          console.error(`Error fetching shorts page ${pageCount + 1}:`, err);
-          break;
+    while (
+      continuationToken &&
+      pageCount < MAX_SCRAPE_PAGES &&
+      needsAnotherPage(videos)
+    ) {
+      pageCount += 1;
+      try {
+        const page = await fetchBrowseContinuation(continuationToken, ytcfg);
+        if (!page.items.length) break;
+        const pageVideos = processGridItems(
+          page.items,
+          channelId,
+          isShorts,
+          isLive,
+        );
+        let added = 0;
+        for (const video of pageVideos) {
+          if (seen.has(video.id)) continue;
+          seen.add(video.id);
+          videos.push(video);
+          added += 1;
         }
+        continuationToken = page.token;
+        if (!continuationToken || added === 0) break;
+      } catch (err) {
+        console.error(`Error fetching ${tab} page ${pageCount + 1}:`, err);
+        break;
       }
     }
 
@@ -445,47 +731,58 @@ async function scrapeVideos(channelId, isShorts, isLive) {
   }
 }
 
-function videoTimeMs(video) {
-  const t = new Date(video.published_at).getTime();
-  return Number.isNaN(t) ? 0 : t;
-}
-
 async function refreshChannels(channelIds) {
-  const stored = await storageGet(VIDEOS_KEY);
-  let allVideos = stored[VIDEOS_KEY] || [];
-  const previousById = new Map();
-  for (const video of allVideos) {
-    if (channelIds.includes(video.channel_id) && video.id && video.published_at) {
-      previousById.set(video.id, video.published_at);
+  try {
+    const stored = await storageGet(VIDEOS_KEY);
+    let allVideos = stored[VIDEOS_KEY] || [];
+    const previousById = new Map();
+    for (const video of allVideos) {
+      if (
+        channelIds.includes(video.channel_id) &&
+        video.id &&
+        video.published_at
+      ) {
+        previousById.set(video.id, video.published_at);
+      }
     }
-  }
 
-  allVideos = allVideos.filter((v) => !channelIds.includes(v.channel_id));
+    allVideos = allVideos.filter((v) => !channelIds.includes(v.channel_id));
 
-  for (const id of channelIds) {
-    try {
-      const videos = await scrapeVideos(id, false, false);
-      const shorts = await scrapeVideos(id, true, false);
-      const live = await scrapeVideos(id, false, true);
-      const scraped = [...videos, ...shorts, ...live].map((video) => {
-        if (!video.published_at && previousById.has(video.id)) {
-          return { ...video, published_at: previousById.get(video.id) };
-        }
-        return video;
-      });
-      allVideos.push(...scraped);
-    } catch (err) {
-      // Skip failed channels
+    for (const id of channelIds) {
+      try {
+        const videos = await scrapeVideos(id, false, false);
+        const shorts = await scrapeVideos(id, true, false);
+        const live = await scrapeVideos(id, false, true);
+        const scraped = [...videos, ...shorts, ...live].map((video) => {
+          if (!video.published_at && previousById.has(video.id)) {
+            return { ...video, published_at: previousById.get(video.id) };
+          }
+          return video;
+        });
+        allVideos.push(
+          ...takeChannelVideos(
+            scraped.filter((video) => !video.is_short && !video.is_live),
+          ),
+          ...takeChannelVideos(scraped.filter((video) => video.is_short)),
+          ...takeChannelVideos(scraped.filter((video) => video.is_live)),
+        );
+      } catch (err) {
+        // Skip failed channels
+      }
     }
-  }
 
-  allVideos.sort((a, b) => videoTimeMs(b) - videoTimeMs(a));
-  if (allVideos.length > 1000) {
-    allVideos = allVideos.slice(0, 1000);
-  }
+    allVideos.sort(
+      (a, b) => (videoPublishedMs(b) || 0) - (videoPublishedMs(a) || 0),
+    );
+    if (allVideos.length > 10000) {
+      allVideos = allVideos.slice(0, 10000);
+    }
 
-  await storageSet({ [VIDEOS_KEY]: allVideos });
-  return { refreshed: channelIds.length };
+    await storageSet({ [VIDEOS_KEY]: allVideos });
+    return { refreshed: channelIds.length };
+  } finally {
+    await closeBrowseWindow();
+  }
 }
 
 chrome.browserAction.onClicked.addListener(() => {

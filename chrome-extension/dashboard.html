@@ -6,29 +6,7 @@
     <link rel="stylesheet" href="dashboard.css" />
   </head>
   <body>
-    <div class="auth-screen" id="authScreen">
-      <div class="auth-card">
-        <div class="brand auth-brand">
-          <span class="brand-mark" aria-hidden="true"></span>
-          <span class="brand-name">Collections</span>
-        </div>
-        <h1>Your YouTube, grouped your way</h1>
-        <p>
-          Sign in to sync collections across browsers. Channel and video data is
-          shared; your collections stay private.
-        </p>
-        <button
-          type="button"
-          class="primary-btn google-btn"
-          id="googleSignInBtn"
-        >
-          Sign in with Google
-        </button>
-        <p class="form-hint auth-error" id="authError"></p>
-      </div>
-    </div>
-
-    <div class="app" id="app" hidden>
+    <div class="app" id="app">
       <aside class="sidebar">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true"></span>
@@ -150,23 +128,6 @@
             Close
           </button>
         </div>
-
-        <p class="form-hint" id="signedInAs"></p>
-        <button type="button" class="icon-btn" id="signOutBtn">Sign out</button>
-
-        <label class="field-label" for="oauthRedirectUrl"
-          >OAuth redirect URL</label
-        >
-        <div class="redirect-row">
-          <input type="text" id="oauthRedirectUrl" readonly />
-          <button type="button" class="icon-btn" id="copyRedirectBtn">
-            Copy
-          </button>
-        </div>
-        <p class="form-hint">
-          Add this URL under Supabase → Authentication → URL Configuration →
-          Redirect URLs.
-        </p>
 
         <div class="backup-zone">
           <h3>Backup &amp; Restore</h3>

@@ -666,61 +666,6 @@ input {
   font-size: 12px;
 }
 
-.auth-screen {
-  min-height: 100vh;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
-}
-
-.auth-screen:not([hidden]) {
-  display: flex;
-}
-
-.auth-card {
-  width: 420px;
-  max-width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px 26px;
-}
-
-.auth-brand {
-  margin-bottom: 18px;
-}
-
-.auth-card h1 {
-  font-family: var(--font-display);
-  font-size: 22px;
-  margin: 0 0 8px;
-}
-
-.auth-card p {
-  color: var(--text-muted);
-  margin: 0 0 18px;
-  line-height: 1.45;
-}
-
-.google-btn {
-  width: 100%;
-}
-
-.auth-error {
-  color: var(--danger);
-  min-height: 18px;
-}
-
-.redirect-row {
-  display: flex;
-  gap: 8px;
-}
-
-.redirect-row input {
-  flex: 1;
-}
-
 /* ---------- Empty states ---------- */
 
 .empty-state,

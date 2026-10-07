@@ -234,23 +234,12 @@ function getDragAfterChannelElement(container, y) {
   ).element;
 }
 
-function daysAgoIso(days) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString();
-}
-
 function uniqueChannelIds() {
   const ids = new Set();
   for (const col of state.collections) {
     for (const id of col.channelIds) ids.add(id);
   }
   return [...ids];
-}
-
-function watchedVideoIds() {
-  const data = state.watchedVideoIds || new Set();
-  return data;
 }
 
 async function loadWatchedVideos() {
@@ -265,22 +254,13 @@ async function saveWatchedVideos() {
 }
 
 function toggleWatched(videoId) {
-  console.log(
-    "toggleWatched called with:",
-    videoId,
-    "current watched:",
-    state.watchedVideoIds.has(videoId),
-  );
   if (state.watchedVideoIds.has(videoId)) {
     state.watchedVideoIds.delete(videoId);
   } else {
     state.watchedVideoIds.add(videoId);
   }
   saveWatchedVideos()
-    .then(() => {
-      console.log("saved, re-rendering feed");
-      renderFeed();
-    })
+    .then(() => renderFeed())
     .catch((err) => console.error("Failed to save watched:", err));
 }
 
@@ -528,27 +508,12 @@ async function loadFeed() {
       v.is_live === wantLive,
   );
 
-  // Debug: show channel distribution
-  const channelCounts = {};
-  videos.forEach((v) => {
-    channelCounts[v.channel_id] = (channelCounts[v.channel_id] || 0) + 1;
-  });
-
   videos.sort((a, b) => {
     const bTime = new Date(b.published_at).getTime();
     const aTime = new Date(a.published_at).getTime();
     return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
   });
-  state.feedVideos = videos.slice(0, 50);
-}
-
-function showSignedIn() {
-  el("authScreen").hidden = true;
-  el("app").hidden = false;
-  // Hide specific UI elements that are no longer needed
-  if (el("manageChannelsBtn")) el("manageChannelsBtn").hidden = false;
-  if (el("signOutBtn")) el("signOutBtn").style.display = "none";
-  if (el("authError")) el("authError").style.display = "none";
+  state.feedVideos = videos;
 }
 
 function renderSidebar() {
@@ -820,10 +785,10 @@ function renderFeed() {
           : "No recent videos";
       el("emptySub").textContent =
         uniqueChannelIds().length === 0
-          ? "Create a collection and add channels. Their latest videos from the will show up here."
+          ? "Create a collection and add channels. Their latest videos will show up here."
           : state.hideWatched
             ? "All videos have been watched."
-            : "No videos from the in your collections.";
+            : "No videos from your collections yet.";
     } else if (state.view === "channel") {
       el("emptyTitle").textContent = "Nothing here yet";
       el("emptySub").textContent =
@@ -1164,7 +1129,6 @@ el("refreshBtn").addEventListener("click", async () => {
   let res;
   try {
     res = await sendMessage({ type: "REFRESH_CHANNELS", channelIds });
-    console.log("Refresh response:", res);
   } catch (err) {
     console.error("Refresh error:", err);
     res = { ok: false, error: err.message };
@@ -1222,7 +1186,6 @@ document.addEventListener("keydown", (e) => {
 
 (async function init() {
   try {
-    showSignedIn();
     await loadCollections();
     state.view = "home";
     await renderAll();
