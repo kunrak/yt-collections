@@ -13,6 +13,26 @@ let state = {
 
 const el = (id) => document.getElementById(id);
 
+function closeMobileSidebar() {
+  const sidebar = el("sidebar");
+  const backdrop = el("sidebarBackdrop");
+  const toggle = el("sidebarToggle");
+  sidebar?.classList.remove("open");
+  if (backdrop) backdrop.hidden = true;
+  document.body.classList.remove("sidebar-open");
+  if (toggle) toggle.setAttribute("aria-expanded", "false");
+}
+
+function openMobileSidebar() {
+  const sidebar = el("sidebar");
+  const backdrop = el("sidebarBackdrop");
+  const toggle = el("sidebarToggle");
+  sidebar?.classList.add("open");
+  if (backdrop) backdrop.hidden = false;
+  document.body.classList.add("sidebar-open");
+  if (toggle) toggle.setAttribute("aria-expanded", "true");
+}
+
 let authRequired = false;
 let storageBackend = "local";
 let serverStorageCache = null;
@@ -766,6 +786,7 @@ function renderSidebar() {
       const openVideo = () => {
         state.view = "channel";
         state.activeChannelId = ch.id;
+        closeMobileSidebar();
         renderAll();
       };
       nameEl.addEventListener("click", openVideo);
@@ -826,6 +847,7 @@ function renderSidebar() {
         state.view = "collection";
         state.activeCollectionId = col.id;
         if (isCollapsed) col.expanded = true;
+        closeMobileSidebar();
       }
       saveCollections().then(() => renderAll());
     });
@@ -1053,8 +1075,17 @@ async function renderAll() {
 el("homeNavBtn").addEventListener("click", () => {
   state.view = "home";
   state.activeCollectionId = null;
+  closeMobileSidebar();
   renderAll();
 });
+
+el("sidebarToggle")?.addEventListener("click", () => {
+  const sidebar = el("sidebar");
+  if (sidebar?.classList.contains("open")) closeMobileSidebar();
+  else openMobileSidebar();
+});
+
+el("sidebarBackdrop")?.addEventListener("click", () => closeMobileSidebar());
 
 el("newCollectionBtn").addEventListener("click", () =>
   openModal("newCollectionModal"),

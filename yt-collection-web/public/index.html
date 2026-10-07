@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Channel Collections for YouTube</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
@@ -26,7 +27,8 @@
     </div>
 
     <div class="app" id="app">
-      <aside class="sidebar">
+      <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+      <aside class="sidebar" id="sidebar">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name">Collections</span>
@@ -62,6 +64,18 @@
       <main class="main">
         <header class="topbar">
           <div class="topbar-left">
+            <button
+              type="button"
+              class="sidebar-toggle"
+              id="sidebarToggle"
+              aria-label="Open menu"
+              aria-expanded="false"
+              aria-controls="sidebar"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <h1 id="collectionTitle">—</h1>
             <span class="channel-count" id="channelCount"></span>
           </div>
