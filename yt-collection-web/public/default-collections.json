@@ -1,0 +1,392 @@
+{
+  "version": 1,
+  "exportedAt": "2026-10-07T10:01:38.255Z",
+  "collections": [
+    {
+      "id": "1791156580961",
+      "name": "Global News",
+      "channelIds": [
+        "UC7fWeaHhqgM4Ry-RMpM2YYw",
+        "UCXIJgqnII2ZOINSWNOGFThA",
+        "UCO0akufu9MOzyz3nvGIXAAw",
+        "UCVgO39Bk5sMo66-6o6Spn6Q",
+        "UC5G0-uMcGFhNts84d24BZqw",
+        "UCIYLOcEUX6TbBo7HQVF2PKA",
+        "UCJg9wBPyKMNA5sRDnvzmkdg",
+        "UCoMdktPbSTixAyNGwb-UYkQ",
+        "UCeY0bbntWzzVIaj2z3QigXg",
+        "UC16niRr50-MSBwiO3YDb3RA",
+        "UCupvZG-5ko_eiXAupbDfxWw",
+        "UCBi2mrWuNuyYy4gbM6fU18Q",
+        "UCFQgi22Ht00CpaOQLtvZx2A",
+        "UCTrQ7HXWRRxr7OsOtodr2_w",
+        "UChqUTb7kYRX8-EiaN3XFrSQ",
+        "UCyri-PL3l4Dn9IooWXQAqfA",
+        "UCIRYBXDze5krPDzAEOxFGVA"
+      ],
+      "expanded": false
+    },
+    {
+      "id": "1791156589863",
+      "name": "India News",
+      "channelIds": [
+        "UCHDXXHPrz-1GVbK_qk82hBQ",
+        "UCKS2lBhhZZGipYENVHxMBkQ",
+        "UCN7B-QD0Qgn2boVH5Q0pOWg",
+        "UCm7lHFkt2yB_WzL67aruVBQ",
+        "UCdDjoZAtt6PjQKAbr2FTOAQ",
+        "UCM1VqjE2rshkzKfp4zRVwKA",
+        "UC3njZ48-FDxLleBYaP0SZIg",
+        "UC6JEz6BKg7hX7idKecN7QYA",
+        "UC21lgazxNRVOWUqqq7hU9TQ",
+        "UCURG8Jv8fpoI_yoK5AAbMMQ"
+      ],
+      "expanded": true
+    },
+    {
+      "id": "1791156607883",
+      "name": "Documentary",
+      "channelIds": [
+        "UCW39zufHfsuGgpLviKh297Q",
+        "UCn8zNIfYAQNdrFRrr8oibKw",
+        "UCLXo7UDZvByw2ixzpQCufnA",
+        "UCHpw8xwDNhU9gdohEcJu4aA",
+        "UCqnbDFdCpuN8CMEg0VuEBqA",
+        "UCK7tptUDHh-RYDsdxO1-5QQ"
+      ],
+      "expanded": false
+    },
+    {
+      "id": "1791156614462",
+      "name": "Geopolitics",
+      "channelIds": [
+        "UC-eegKVWEgBCa4OzjnK_PtA",
+        "UCrC8mOqJQpoB7NuIMKIS6rQ",
+        "UCCJsQKOKArvDksacfT2ryQw",
+        "UCHyu2gwfAkOXWroIjvxVUCg",
+        "UClGVMvGjakjZHH_TmnbxYlQ"
+      ],
+      "expanded": true
+    },
+    {
+      "id": "1791156662970",
+      "name": "Fun",
+      "channelIds": [
+        "UCuCkxoKLYO_EQ2GeFtbM_bw",
+        "UC9RM-iSvTu1uPJb8X5yp3EQ",
+        "UC0intLFzLaudFG-xAvUEO-A",
+        "UC6n8I1UDTKP1IWjQMg6_TwA"
+      ],
+      "expanded": true
+    },
+    {
+      "id": "1791156674527",
+      "name": "Business",
+      "channelIds": [
+        "UCCXoCcu9Rp7NPbTzIvogpZg",
+        "UCcyq283he07B7_KUX07mmtA",
+        "UCQsob4fGjHWhYHW0OLb6rew",
+        "UCaPHWiExfUWaKsUtENLCv5w",
+        "UCUMZ7gohGI9HcU9VNsr2FJQ",
+        "UCXbKJML9pVclFHLFzpvBgWw"
+      ],
+      "expanded": true
+    },
+    {
+      "id": "1791156693067",
+      "name": "History",
+      "channelIds": [
+        "UCXD5-f9urX1Foas68AL_HHQ",
+        "UCmGSJVG3mCRXVOP4yZrU1Dw"
+      ],
+      "expanded": true
+    }
+  ],
+  "channels": {
+    "UC-eegKVWEgBCa4OzjnK_PtA": {
+      "id": "UC-eegKVWEgBCa4OzjnK_PtA",
+      "title": "TLDR News EU",
+      "thumbnail": "https://yt3.googleusercontent.com/rmlVWfdP0UhyiMTdKXk5yOZNiS60oYOWZcJ3d_DJVI2jvjjQXdhaZjHIThzERMyOTAXCxvO4EMI=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC0intLFzLaudFG-xAvUEO-A": {
+      "id": "UC0intLFzLaudFG-xAvUEO-A",
+      "title": "Not Just Bikes",
+      "thumbnail": "https://yt3.googleusercontent.com/ZFNLKDUS39d0W0x_0Zfe-8DAg1WCvnic23kQn4mWd-130HcPF0PbYUSAI1BnDkZt73wHEpQ3TA=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC16niRr50-MSBwiO3YDb3RA": {
+      "id": "UC16niRr50-MSBwiO3YDb3RA",
+      "title": "BBC News",
+      "thumbnail": "https://yt3.googleusercontent.com/v4JamQ9B-PUiJHjmZQs9UwTaoLQW8vijJMMpV5QvA2wHQ6iwWM8Q1s6O4jgTl0dtDigVWAi7SA=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC21lgazxNRVOWUqqq7hU9TQ": {
+      "id": "UC21lgazxNRVOWUqqq7hU9TQ",
+      "title": "MO",
+      "thumbnail": "https://yt3.googleusercontent.com/ewXjRmyMT2JxSgovZ8i_4feNDb4m3dFbGKnTOplgsKKEwzhyj6wckflsxGZfzulvV7_hE6mcEw=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC3njZ48-FDxLleBYaP0SZIg": {
+      "id": "UC3njZ48-FDxLleBYaP0SZIg",
+      "title": "The Hindu",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_noBA8yminc26WM23DspWUL9P_mrUoZXhPH5uX8dq9gsfA=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC5-vVa0PSN5U-Lf7GyObEjw": {
+      "id": "UC5-vVa0PSN5U-Lf7GyObEjw",
+      "title": "Shivam Mishra",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_ln-9HYXgytSDFQbDRDb_rgH6bzytH6hE2dknWeVZrk6K8go1x19Eeds3jB779sjKtoDw=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC5G0-uMcGFhNts84d24BZqw": {
+      "id": "UC5G0-uMcGFhNts84d24BZqw",
+      "title": "TODAY",
+      "thumbnail": "https://yt3.googleusercontent.com/A21Ef7oR-aKxYDM9sHNxu-m6j5tgrxAGPb4rs8S2Cx0XwzReqfW3VvmKejalgNG_eSF4sX_NLek=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC6JEz6BKg7hX7idKecN7QYA": {
+      "id": "UC6JEz6BKg7hX7idKecN7QYA",
+      "title": "Jist",
+      "thumbnail": "https://yt3.googleusercontent.com/0EFsFeaqAfz9WxvoIeIV1ErozBjnpDBUNXLTSSjY8gI7tK7HB1obFP31ZB0bMomu4s0JUaQ9yw=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC6n8I1UDTKP1IWjQMg6_TwA": {
+      "id": "UC6n8I1UDTKP1IWjQMg6_TwA",
+      "title": "The B1M",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_nja6vcyrzxCwZPPWo3bpfjrilOQWA3WHrzOTWsAIZSYlM=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC7fWeaHhqgM4Ry-RMpM2YYw": {
+      "id": "UC7fWeaHhqgM4Ry-RMpM2YYw",
+      "title": "TRT World",
+      "thumbnail": "https://yt3.googleusercontent.com/luLQWmGFG4iDC1U_2JlzZ1mquci_sUdfZfFl4eWgBkDpW6tvZT0MEA4c4JebJdi9hCo518q1=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UC9RM-iSvTu1uPJb8X5yp3EQ": {
+      "id": "UC9RM-iSvTu1uPJb8X5yp3EQ",
+      "title": "Wendover Productions",
+      "thumbnail": "https://yt3.googleusercontent.com/OnFIYArpFofrmngLXAsDGHsoVUpPA-yW3oD2ug7J2tq7H4BUcnnQvyfaQ8vw6s5JCiXJu1hb5A=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCBi2mrWuNuyYy4gbM6fU18Q": {
+      "id": "UCBi2mrWuNuyYy4gbM6fU18Q",
+      "title": "ABC News",
+      "thumbnail": "https://yt3.googleusercontent.com/GJ8V0NX6NddGh9bf4zED4tsjPjjBK2hdp5FWHMy09pV7sdSkkE3yEhCRSch4waEb9ZavyUrWfw=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCCJsQKOKArvDksacfT2ryQw": {
+      "id": "UCCJsQKOKArvDksacfT2ryQw",
+      "title": "World Affairs by Unacademy",
+      "thumbnail": "https://yt3.googleusercontent.com/gACFYVpRYiIeRN87biFtdyY_uTVfwsmVgI_C8mcoJBwKqp3ZFtle5QQnGmu0hIUV8mTmwL_beHg=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCCXoCcu9Rp7NPbTzIvogpZg": {
+      "id": "UCCXoCcu9Rp7NPbTzIvogpZg",
+      "title": "Fox Business",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_nK51qId_r96-J2XXuIH7yvbP7pIzwuG_L9i4bYx3w4IzI=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCFQgi22Ht00CpaOQLtvZx2A": {
+      "id": "UCFQgi22Ht00CpaOQLtvZx2A",
+      "title": "ITV News",
+      "thumbnail": "https://yt3.googleusercontent.com/MqUCYjr6N-5EQbksVcE4Tro5p32JJgi5Hl8_O6yew2hhfXHPX1V4PJehYbxVoXDJwZzgAPgu=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCHDXXHPrz-1GVbK_qk82hBQ": {
+      "id": "UCHDXXHPrz-1GVbK_qk82hBQ",
+      "title": "Deccan Herald",
+      "thumbnail": "https://yt3.googleusercontent.com/WysTUs8U2P56tOwypiZMS5CWMbkbA3l8E_ypmvI8dbpxPk0vvbkZVHyuy8YS5ARG7XnOVLQCCg=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCHpw8xwDNhU9gdohEcJu4aA": {
+      "id": "UCHpw8xwDNhU9gdohEcJu4aA",
+      "title": "The Guardian",
+      "thumbnail": "https://yt3.googleusercontent.com/nic8lu6MJQg0LQ093PiOfzrCd4e6BefWdO92sbOgTO_dCkZfWfVbH4_shpUDRe-tuPYeeeav6Q=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCHyu2gwfAkOXWroIjvxVUCg": {
+      "id": "UCHyu2gwfAkOXWroIjvxVUCg",
+      "title": "Adda247 Skills",
+      "thumbnail": "https://yt3.googleusercontent.com/j68Hr1NtrD4LLjZgfO_4An4CFJgUlJeLj4NZATFCWePPH5oWlr-Q0xgODZ9R7qZ7mehbRRJ9=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCIRYBXDze5krPDzAEOxFGVA": {
+      "id": "UCIRYBXDze5krPDzAEOxFGVA",
+      "title": "Guardian News",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_nDo1i4jEe90wqB2OCDy57NjTMVUHo1o7vFBjLzVzLeBQI=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCIYLOcEUX6TbBo7HQVF2PKA": {
+      "id": "UCIYLOcEUX6TbBo7HQVF2PKA",
+      "title": "9 News Australia",
+      "thumbnail": "https://yt3.googleusercontent.com/JzqNSa2-xwC-09jtp9rtHO13iGSWOp1WlzVcXjOluJFUWpz2C_g8VyGZuFdzXWWnnj_ZhUZj=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCJg9wBPyKMNA5sRDnvzmkdg": {
+      "id": "UCJg9wBPyKMNA5sRDnvzmkdg",
+      "title": "LiveNOW from FOX",
+      "thumbnail": "https://yt3.googleusercontent.com/AqzY5ePezRAQ2136-TbM_88d43JfIovkzztge92WKQ4K_ISfJMFA9yuX0Nw87DLWms4W9r2c3Q=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCK7tptUDHh-RYDsdxO1-5QQ": {
+      "id": "UCK7tptUDHh-RYDsdxO1-5QQ",
+      "title": "The Wall Street Journal",
+      "thumbnail": "https://yt3.googleusercontent.com/zbPzRWTIiIg_sNPoAgBf4COWvAoac3vgbiTEu1dfpqH3YPDNvnxMjDtAGftuw5EPx8wfSjMzr2I=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCKS2lBhhZZGipYENVHxMBkQ": {
+      "id": "UCKS2lBhhZZGipYENVHxMBkQ",
+      "title": "HW News English",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_ndgIbV6e4Bz--uG73meh63yyHZBizAc1CDNqDmUXV-w-s=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCL61uQroAMA9vnI0QCzAuCw": {
+      "id": "UCL61uQroAMA9vnI0QCzAuCw",
+      "title": "Vishal Parihar English365",
+      "thumbnail": "https://yt3.googleusercontent.com/r3rA1pMmzeVkSY5m8L04WFCxVZVpOU7Pfd11wt1QJlGDhOdvsIplgOcaigBid8kBiPFKEx9rbQ=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCLXo7UDZvByw2ixzpQCufnA": {
+      "id": "UCLXo7UDZvByw2ixzpQCufnA",
+      "title": "Vox",
+      "thumbnail": "https://yt3.googleusercontent.com/iak9xjDjDoQHn9UNWSvkobPuxAzK1ApefjPH7HGObwo71AbaiEqdafMjmUJCgOoBFWNKPS2t2eI=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCM1VqjE2rshkzKfp4zRVwKA": {
+      "id": "UCM1VqjE2rshkzKfp4zRVwKA",
+      "title": "The Free Press Journal",
+      "thumbnail": "https://yt3.googleusercontent.com/BiAlGddv104y8i6ZZuq3dngHdYkWCmGk3pf9-KKQpkxCVO7W__qrS6SecTb8NsWG_K5MJKQ5L8Y=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCN7B-QD0Qgn2boVH5Q0pOWg": {
+      "id": "UCN7B-QD0Qgn2boVH5Q0pOWg",
+      "title": "BBC News Hindi",
+      "thumbnail": "https://yt3.googleusercontent.com/eRn3COY-otYqOxgZ7Kz3sH1xu_x0wEMm6RmZgmubzjxTrWAX57F7HerZ_Q5VcOE4FkbfxRIjW4k=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCO0akufu9MOzyz3nvGIXAAw": {
+      "id": "UCO0akufu9MOzyz3nvGIXAAw",
+      "title": "News24",
+      "thumbnail": "https://yt3.googleusercontent.com/EESyW0_a9mZXY-kxPxNRbGj7GR19r8KwisdQdFkuVfTCW4k_6ei1PWwN4LirjXaNx0pybwU_Cg=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCQsob4fGjHWhYHW0OLb6rew": {
+      "id": "UCQsob4fGjHWhYHW0OLb6rew",
+      "title": "Business Standard",
+      "thumbnail": "https://yt3.googleusercontent.com/FQvVwa76pC2yYyQYatT9HsAtg1IfzFVFcuKL8r8oF03-pgJ7D7Gj_CEYPTeJOAeSp-C1fPjk=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCTrQ7HXWRRxr7OsOtodr2_w": {
+      "id": "UCTrQ7HXWRRxr7OsOtodr2_w",
+      "title": "Channel 4 News",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_mNdhtpAi0ZQmCqfkDSq6MQVdbfZe-c70nZ1qqdyQNzK3c=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCUMZ7gohGI9HcU9VNsr2FJQ": {
+      "id": "UCUMZ7gohGI9HcU9VNsr2FJQ",
+      "title": "Bloomberg Originals",
+      "thumbnail": "https://yt3.googleusercontent.com/8sL0eqOeU4a1wZBVxn5NOFsug17I2XM0dmCdT7eouq12qE-I-JLCzrzub9Z4SdF0IEt5AzEY=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCURG8Jv8fpoI_yoK5AAbMMQ": {
+      "id": "UCURG8Jv8fpoI_yoK5AAbMMQ",
+      "title": "News Pinch",
+      "thumbnail": "https://yt3.googleusercontent.com/rn3arJTLk8m7EYSHn2MOtgmMICawE58xQKV0JoMhdMZ9ZNyqAOuCV0L63s-DPFTQGLaMdR5p=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCVgO39Bk5sMo66-6o6Spn6Q": {
+      "id": "UCVgO39Bk5sMo66-6o6Spn6Q",
+      "title": "ABC News (Australia)",
+      "thumbnail": "https://yt3.googleusercontent.com/sc9xa2bYk6pIuKX3qgMHSrxEkuPmg57JMl_lRaJqCZxuSIeQt1B6BV23c-16Q3b7Aep0on1b=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCW39zufHfsuGgpLviKh297Q": {
+      "id": "UCW39zufHfsuGgpLviKh297Q",
+      "title": "DW Documentary",
+      "thumbnail": "https://yt3.googleusercontent.com/rgphL4c6DGPlwzkxIzE5tH0DPe1yuynH0nTdOAecCVIX5gUjJGsCwXtp9wnxjcsfqboL6C5aFg=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCXD5-f9urX1Foas68AL_HHQ": {
+      "id": "UCXD5-f9urX1Foas68AL_HHQ",
+      "title": "DW History and Culture",
+      "thumbnail": "https://yt3.googleusercontent.com/XbL1mRog6Cvjp7-97K28nwfDxaOur6-J3lcmBrFgUKwnj7MqoPvz0qel2cngZJl7Gz7rJFAhddo=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCXIJgqnII2ZOINSWNOGFThA": {
+      "id": "UCXIJgqnII2ZOINSWNOGFThA",
+      "title": "Fox News",
+      "thumbnail": "https://yt3.googleusercontent.com/G3gLy3HBgiZ21mEt1uzR0VPA6VXpsgJReuD7Z91nHwcgyFVu_QpHNpxuULN1D0YEQBwD0F1HwQ=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCXbKJML9pVclFHLFzpvBgWw": {
+      "id": "UCXbKJML9pVclFHLFzpvBgWw",
+      "title": "Markets by Zerodha",
+      "thumbnail": "https://yt3.googleusercontent.com/VpJTdp9VWAf9I3lyd_KhquUqRh176AYD2LNfRAFCWKy6pQFY6RHt00tbmUn1f_6BcpGfhjEG=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCYa4_JrOrf8R5Kz2uOtccXQ": {
+      "id": "UCYa4_JrOrf8R5Kz2uOtccXQ",
+      "title": "Studified",
+      "thumbnail": "https://yt3.googleusercontent.com/IqbtKbmpgAV6DLToaruJ9OCf9tl2GkucA9Ds-CS9g1uFPA4moyiSss0JKhberKbLM6TYgMIZ-w=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCaPHWiExfUWaKsUtENLCv5w": {
+      "id": "UCaPHWiExfUWaKsUtENLCv5w",
+      "title": "Business Today",
+      "thumbnail": "https://yt3.googleusercontent.com/d8aonbazIXdeP94JJ5mXnMam7VctYGR6ggoMLfUhtqun7sajHCl6oTeIG3Ubrm-UpsBm0hllOQ=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCaYjS5nu2kPkFKbVmuQxcnw": {
+      "id": "UCaYjS5nu2kPkFKbVmuQxcnw",
+      "title": "Exam Vocabulary",
+      "thumbnail": "https://yt3.googleusercontent.com/wkIQ-yVtoVPvPWmsSLwR3tuRsDQbPPrfgkhkmY-VPakZIDHyWaGH9k9mHliOVrBnUJKPip5i=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCcyq283he07B7_KUX07mmtA": {
+      "id": "UCcyq283he07B7_KUX07mmtA",
+      "title": "Business Insider",
+      "thumbnail": "https://yt3.googleusercontent.com/pjDcIrc21oYPCkKpfY1zElDRHhw907VyW4zpuhJP5YCCvZPpyt0de08XM-uECMPQFAsidNK0bw=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCdDjoZAtt6PjQKAbr2FTOAQ": {
+      "id": "UCdDjoZAtt6PjQKAbr2FTOAQ",
+      "title": "Alt News",
+      "thumbnail": "https://yt3.googleusercontent.com/X9dXmWpiO9FtDalCfla1MmU050_O5CfUI4EyOXJLL4qnmEPICsnYMm15JTya5k-LyeKi4h28=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCeY0bbntWzzVIaj2z3QigXg": {
+      "id": "UCeY0bbntWzzVIaj2z3QigXg",
+      "title": "NBC News",
+      "thumbnail": "https://yt3.googleusercontent.com/PJj5jtuEOi5UmkFy4IBonj5WcabNcnJAIJe-jZMd1ArwIuVyQxFH_2zryBHwvfv6mJujwRpWDCM=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UChau-ci0HNZ7lhK5XIM9PLw": {
+      "id": "UChau-ci0HNZ7lhK5XIM9PLw",
+      "title": "BRAIN BOX",
+      "thumbnail": "https://yt3.googleusercontent.com/KV-XY5DsUWwiohnO5dxP3amhc5pXD-aMbATWNTf_RA8x6qSiDODFVVHA9Sn94QW2JGqBjic7iBs=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UChqUTb7kYRX8-EiaN3XFrSQ": {
+      "id": "UChqUTb7kYRX8-EiaN3XFrSQ",
+      "title": "Reuters",
+      "thumbnail": "https://yt3.googleusercontent.com/bCcVVrrV0EhGFJKsSvmeZHA9Y-YzSL9Keqrrr0HWYUPQy3-mVUVNHMbjwt7IoVkpsHt4E6BZ3pM=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCjO0g7qbAcZX-vtdIFCA41Q": {
+      "id": "UCjO0g7qbAcZX-vtdIFCA41Q",
+      "title": "CAREER DEFINER",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_mKZExO4ueHzT87-z7jZKM1hkr7ZDLqkL5S7za6LXur_14=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UClGVMvGjakjZHH_TmnbxYlQ": {
+      "id": "UClGVMvGjakjZHH_TmnbxYlQ",
+      "title": "RocaNews",
+      "thumbnail": "https://yt3.googleusercontent.com/4n7lgk5U_hJYGKa8UVydgxYq08E9AGCaaDyazGfFhy7eIY3q1BagxhlCvm0MqQYhT1bvuTCNHec=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCm7lHFkt2yB_WzL67aruVBQ": {
+      "id": "UCm7lHFkt2yB_WzL67aruVBQ",
+      "title": "Hindustan Times",
+      "thumbnail": "https://yt3.googleusercontent.com/KMsQbza8L3CALNQFqAjUrpgiuSCma4nb0WH7tsvmwH-YxeaBWygxLMp6FdoaJCEY8KjnnL2OsA=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCmGSJVG3mCRXVOP4yZrU1Dw": {
+      "id": "UCmGSJVG3mCRXVOP4yZrU1Dw",
+      "title": "Johnny Harris",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_kswBDn49WW5IneVE-5RlKyud5GvdzyQQ5SJQyVvJ4S3pk=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCn8zNIfYAQNdrFRrr8oibKw": {
+      "id": "UCn8zNIfYAQNdrFRrr8oibKw",
+      "title": "VICE",
+      "thumbnail": "https://yt3.googleusercontent.com/9AgWUnohXk3gFYvmvAZemlr1q6yd7NxHozeEqrPpJhYf9Crjrvqml0ulZ4PL4v38I4XDoLEhaw=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCoMdktPbSTixAyNGwb-UYkQ": {
+      "id": "UCoMdktPbSTixAyNGwb-UYkQ",
+      "title": "Sky News",
+      "thumbnail": "https://yt3.googleusercontent.com/dGnkztdrLtXRlzkdqReeL-NES2761xxmNVcJhGKqFpR0vQBoP9XaxnXF95FDpwrjyFr2iJvV8Es=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCqnbDFdCpuN8CMEg0VuEBqA": {
+      "id": "UCqnbDFdCpuN8CMEg0VuEBqA",
+      "title": "The New York Times",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_niRq8CFu_t0QX45kIzJ58GtS9zlO2SGo7wArxG9gy6uEc=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCrC8mOqJQpoB7NuIMKIS6rQ": {
+      "id": "UCrC8mOqJQpoB7NuIMKIS6rQ",
+      "title": "StudyIQ IAS",
+      "thumbnail": "https://yt3.googleusercontent.com/QnU8L8IUm5IHAsjvhiNrDqjNhJWX_MWrvwMeVyBWrjP_vnhuhmSIsuQ6Lr5dbTqH2Le5WeGWDA=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCuCkxoKLYO_EQ2GeFtbM_bw": {
+      "id": "UCuCkxoKLYO_EQ2GeFtbM_bw",
+      "title": "Half as Interesting",
+      "thumbnail": "https://yt3.googleusercontent.com/ytc/AIdro_lrhEmfrgwQlzJM4UwITdeCak68LTWLaJ6_2bbofLCFb3s=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCupvZG-5ko_eiXAupbDfxWw": {
+      "id": "UCupvZG-5ko_eiXAupbDfxWw",
+      "title": "CNN",
+      "thumbnail": "https://yt3.googleusercontent.com/wSqAf5WdxsGsl7ZMtlyfz3qKULo_URoFjmKky0gLThm_Jtu2wsVHMu-XzGZPAb-z8zeMBYUUMYA=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCyri-PL3l4Dn9IooWXQAqfA": {
+      "id": "UCyri-PL3l4Dn9IooWXQAqfA",
+      "title": "Hook Global",
+      "thumbnail": "https://yt3.googleusercontent.com/SMWuhvyJl_3sBiq632abhRJTX6jVQ6qVN8LA7AJNYpAn1ptkzUFjhI4_meLQUEKczoqc1mdQ=s72-c-k-c0x00ffffff-no-rj"
+    },
+    "UCzARHhsjYS-qcaaIRv5A0mA": {
+      "id": "UCzARHhsjYS-qcaaIRv5A0mA",
+      "title": "BANKING CHRONICLE",
+      "thumbnail": "https://yt3.googleusercontent.com/DpaYh2Lrr65-8McOMPl3LA4uZJHhwRhg6Z1NYJ6Gk70DIC99ipdpWZNfe5ftZlFdvNfMfDer=s72-c-k-c0x00ffffff-no-rj"
+    }
+  }
+}

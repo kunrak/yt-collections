@@ -1,6 +1,11 @@
 # dependencies
 node_modules/
 
+# lock files
+*.lock
+package-lock.json
+pnpm-lock.yaml
+
 # secrets and local env
 .env
 .env.local
