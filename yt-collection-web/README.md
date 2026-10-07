@@ -33,7 +33,7 @@ To give each visitor their own collections on a shared server:
    - `GOOGLE_CLIENT_SECRET`
    - `SESSION_SECRET` (long random string)
    - `BASE_URL` (public URL, e.g. `https://collections.example.com`)
-5. Restart the server. Users sign in with Google; collections are stored under `data/users/` on the server (not in git).
+5. Restart the server. Users sign in with Google; collections are stored under `data/users/` on the server (not in git). Login sessions are stored under `data/sessions/` — use a persistent disk on your host (e.g. Railway volume mounted at `/app/data`) and keep `SESSION_SECRET` stable across deploys.
 
 On first sign-in, any existing data in that browser’s `localStorage` is imported into the account if the server profile is empty.
 

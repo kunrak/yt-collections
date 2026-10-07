@@ -549,6 +549,22 @@ function normalizeImportedCollections(collections) {
     }));
 }
 
+function isAppStorageEmpty() {
+  return (
+    state.collections.length === 0 &&
+    Object.keys(state.channelsById).length === 0
+  );
+}
+
+async function applyDefaultCollectionsIfEmpty() {
+  if (!isAppStorageEmpty()) return false;
+  const res = await fetch("/default-collections.json");
+  if (!res.ok) return false;
+  const data = await res.json();
+  await importBackupData(data);
+  return true;
+}
+
 async function importBackupData(data) {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     throw new Error("This file is not a valid backup.");
@@ -1087,9 +1103,10 @@ el("sidebarToggle")?.addEventListener("click", () => {
 
 el("sidebarBackdrop")?.addEventListener("click", () => closeMobileSidebar());
 
-el("newCollectionBtn").addEventListener("click", () =>
-  openModal("newCollectionModal"),
-);
+el("newCollectionBtn").addEventListener("click", () => {
+  closeMobileSidebar();
+  openModal("newCollectionModal");
+});
 el("emptyCreateBtn").addEventListener("click", () =>
   openModal("newCollectionModal"),
 );
@@ -1159,7 +1176,10 @@ el("manageChannelsBtn").addEventListener("click", () => {
   openModal("channelsModal");
 });
 
-el("settingsBtn").addEventListener("click", () => openModal("settingsModal"));
+el("settingsBtn").addEventListener("click", () => {
+  closeMobileSidebar();
+  openModal("settingsModal");
+});
 
 el("signOutBtn")?.addEventListener("click", async () => {
   if (!authRequired) return;
@@ -1408,8 +1428,9 @@ document.addEventListener("keydown", (e) => {
     }
 
     await loadCollections();
+    const seededDefaults = await applyDefaultCollectionsIfEmpty();
     state.view = "home";
-    await renderAll();
+    if (!seededDefaults) await renderAll();
   } catch (err) {
     console.error("Initialization failed:", err);
     if (authRequired) {

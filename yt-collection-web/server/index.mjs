@@ -1,7 +1,9 @@
 import express from "express";
 import session from "express-session";
 import passport from "passport";
+import fs from "node:fs";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.mjs";
 import { configurePassport, requireAuth } from "./auth.mjs";
@@ -15,6 +17,13 @@ import { resolveChannel, refreshChannels } from "./youtube.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "..", "public");
+const sessionsDir = path.join(__dirname, "..", "data", "sessions");
+const sessionTtlSeconds = 60 * 60 * 24 * 30;
+
+const require = createRequire(import.meta.url);
+const FileStore = require("session-file-store")(session);
+
+fs.mkdirSync(sessionsDir, { recursive: true });
 
 const app = express();
 app.set("trust proxy", 1);
@@ -25,13 +34,17 @@ configurePassport();
 app.use(
   session({
     secret: config.sessionSecret,
+    store: new FileStore({
+      path: sessionsDir,
+      ttl: sessionTtlSeconds,
+    }),
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       secure: config.isProduction,
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24 * 30,
+      maxAge: sessionTtlSeconds * 1000,
     },
   }),
 );
