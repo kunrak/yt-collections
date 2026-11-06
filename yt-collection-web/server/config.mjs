@@ -15,6 +15,7 @@ const googleClientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
 const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || "").trim();
 const sessionSecret =
   process.env.SESSION_SECRET || "dev-only-change-me-in-production";
+const databaseUrl = (process.env.DATABASE_URL || "").trim();
 
 const authEnabled = Boolean(googleClientId && googleClientSecret);
 
@@ -24,6 +25,7 @@ export const config = {
   googleClientId,
   googleClientSecret,
   sessionSecret,
+  databaseUrl,
   authEnabled,
   isProduction: process.env.NODE_ENV === "production",
 };

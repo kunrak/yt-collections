@@ -18,6 +18,18 @@ For auto-restart while developing:
 npm run dev
 ```
 
+## Persistent data on Render / Neon
+
+If you deploy on Render, do not keep user data in the local filesystem. The app used to write to `data/users/` and `data/sessions/`, which are wiped when the instance restarts.
+
+To persist data across restarts, add a Neon/Postgres connection string to `.env`:
+
+```bash
+DATABASE_URL=postgresql://user:pass@host/dbname?sslmode=require
+```
+
+Then restart the server. The app will create a `user_storage` table and use `connect-pg-simple` for session storage automatically. Without a `DATABASE_URL`, it falls back to the local filesystem for local development.
+
 ## Google sign-in (for a public deployment)
 
 Without Google OAuth configured, data stays in **browser `localStorage`** (fine for solo local use).
@@ -33,7 +45,8 @@ To give each visitor their own collections on a shared server:
    - `GOOGLE_CLIENT_SECRET`
    - `SESSION_SECRET` (long random string)
    - `BASE_URL` (public URL, e.g. `https://collections.example.com`)
-5. Restart the server. Users sign in with Google; collections are stored under `data/users/` on the server (not in git). Login sessions are stored under `data/sessions/` — use a persistent disk on your host (e.g. Railway volume mounted at `/app/data`) and keep `SESSION_SECRET` stable across deploys.
+   - `DATABASE_URL` (Neon/Postgres connection string)
+5. Restart the server. Users sign in with Google; collections are stored under a persistent database table instead of instance-local files.
 
 On first sign-in, any existing data in that browser’s `localStorage` is imported into the account if the server profile is empty.
 
